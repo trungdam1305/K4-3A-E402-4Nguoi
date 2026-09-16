@@ -11,7 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from tutor.agent import Tutor
-from tutor.config import ALL_SLIDES, ALL_TRANSCRIPTS, CODEBASE_DIR, LECTURES, find_data_dir, load_dotenv
+from tutor.config import ALL_SLIDES, ALL_TRANSCRIPTS, CODEBASE_DIR, LECTURES, find_data_dir, load_dotenv, REPO_DIR
 from tutor.llm import LLMClient
 
 STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
@@ -88,6 +88,18 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/scenarios":
             return self._json({"scenarios": tutor.scenarios()})
+
+        if path == "/api/eval/golden_set":
+            p = REPO_DIR / "eval" / "golden_set.json"
+            if p.is_file():
+                return self._send(HTTPStatus.OK, p.read_bytes(), "application/json; charset=utf-8")
+            return self._error(HTTPStatus.NOT_FOUND, "Chưa có file golden set")
+
+        if path == "/api/eval/results":
+            p = REPO_DIR / "eval" / "results.json"
+            if p.is_file():
+                return self._send(HTTPStatus.OK, p.read_bytes(), "application/json; charset=utf-8")
+            return self._error(HTTPStatus.NOT_FOUND, "Chưa có file kết quả kiểm thử")
 
         if path == "/api/turns/random":
             turn = tutor.random_turn(arg("lecture", "day1"), uncited_only=arg("uncited", "1") == "1")

@@ -3,173 +3,554 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VLearn Grounded Tutor — Prototype (Working)</title>
+  <title>VLearn Grounded Tutor — Taxonomy UI (shadcn/ui)</title>
+  
+  <!-- Vercel Geist Font (Taxonomy Typography) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-mono/style.css">
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Geist Sans"', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['"Geist Mono"', 'monospace'],
+          },
+          colors: {
+            border: '#e4e4e7',
+            background: '#fafafa',
+            foreground: '#09090b',
+            muted: {
+              DEFAULT: '#f4f4f5',
+              foreground: '#71717a'
+            },
+            card: {
+              DEFAULT: '#ffffff',
+              foreground: '#09090b'
+            },
+            zinc: {
+              50: '#fafafa',
+              100: '#f4f4f5',
+              200: '#e4e4e7',
+              300: '#d4d4d8',
+              400: '#a1a1aa',
+              500: '#71717a',
+              600: '#52525b',
+              700: '#3f3f46',
+              800: '#27272a',
+              900: '#18181b',
+              950: '#09090b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
   <!-- Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
   <!-- PDF.js: hiển thị slide thật từ data pack -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <!-- Prism.js cho Shiki / Code Highlight Style -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+
   <style>
-    @keyframes pulseHighlight {
-      0%, 100% { background-color: rgba(254, 240, 138, 0.35); box-shadow: 0 0 0 3px #eab308; }
-      50% { background-color: rgba(254, 240, 138, 0.85); box-shadow: 0 0 0 3px #ca8a04; }
+    body {
+      background-color: #fafafa;
+      color: #09090b;
+      font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    .highlight-active { animation: pulseHighlight 1.4s ease-in-out 3; }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    .md p { margin: 0 0 .45rem; line-height: 1.55; }
+
+    /* Scrollbar Taxonomy style */
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e4e4e7; border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d4d4d8; }
+
+    /* Citations - Taxonomy Badge style */
+    .cite {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin: 0 2px;
+      padding: 1px 7px;
+      border-radius: 6px;
+      font-family: "Geist Mono", monospace;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.5;
+      vertical-align: 1px;
+      background: #f4f4f5;
+      color: #18181b;
+      border: 1px solid #e4e4e7;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .cite:hover {
+      background: #e4e4e7;
+      color: #09090b;
+      border-color: #d4d4d8;
+      transform: translateY(-1px);
+    }
+    .cite.reported {
+      text-decoration: line-through;
+      opacity: 0.55;
+      border-color: #fda4af;
+      color: #e11d48;
+      background: #fff1f2;
+    }
+
+    /* Markdown inside chat */
+    .md p { margin: 0 0 .45rem; line-height: 1.6; }
     .md p:last-child { margin-bottom: 0; }
-    .md ul { list-style: disc; padding-left: 1.1rem; margin: 0 0 .45rem; }
-    .md ol { list-style: decimal; padding-left: 1.1rem; margin: 0 0 .45rem; }
-    .md li { margin: .15rem 0; line-height: 1.5; }
-    .md code { background: #e2e8f0; border-radius: 3px; padding: 0 3px; font-size: 11px; }
-    .md pre { background: #0f172a; color: #a7f3d0; border-radius: 6px; padding: 8px; font-size: 11px; overflow-x: auto; margin: 0 0 .45rem; }
-    .cite { display: inline-flex; align-items: center; gap: 2px; margin: 0 1px; padding: 0 5px; border-radius: 5px;
-            font-size: 10.5px; font-weight: 600; line-height: 1.5; vertical-align: 1px;
-            background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; white-space: nowrap; }
-    .cite:hover { background: #e0e7ff; }
-    .cite.reported { text-decoration: line-through; opacity: .55; }
+    .md ul { list-style: disc; padding-left: 1.2rem; margin: 0 0 .45rem; }
+    .md ol { list-style: decimal; padding-left: 1.2rem; margin: 0 0 .45rem; }
+    .md li { margin: .2rem 0; line-height: 1.55; }
+    .md code {
+      background: #f4f4f5;
+      color: #09090b;
+      border: 1px solid #e4e4e7;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: "Geist Mono", monospace;
+      font-size: 11px;
+    }
+    .md pre {
+      background: #18181b;
+      color: #f4f4f5;
+      border: 1px solid #27272a;
+      border-radius: 8px;
+      padding: 10px;
+      font-family: "Geist Mono", monospace;
+      font-size: 11px;
+      overflow-x: auto;
+      margin: 0 0 .45rem;
+    }
+
+    /* Highlights */
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.15), 0 0 15px rgba(9, 9, 11, 0.08); }
+      50% { box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.4), 0 0 20px rgba(9, 9, 11, 0.2); }
+    }
+    .highlight-active {
+      animation: pulseGlow 1.2s ease-in-out 3;
+      border-color: #18181b !important;
+    }
+
+    /* Floating Chat Transitions (Taxonomy sheet/dialog style) */
+    #chat-panel {
+      bottom: 5.25rem;
+      right: 1.5rem;
+      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
+    }
+    #chat-panel.chat-closed {
+      opacity: 0;
+      transform: scale(0.94) translateY(16px);
+      pointer-events: none;
+      visibility: hidden;
+    }
+    #chat-panel.chat-open {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+      visibility: visible;
+    }
+    #chat-panel.chat-docked {
+      right: 0 !important;
+      bottom: 0 !important;
+      height: 100vh !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+      border-right: none !important;
+      border-top: none !important;
+      border-bottom: none !important;
+    }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 flex flex-col h-screen overflow-hidden font-sans">
+<body class="bg-[#fafafa] text-zinc-900 flex flex-col h-screen overflow-hidden antialiased select-none">
 
-  <!-- Server chưa chạy -->
-  <div id="offline" class="hidden fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl max-w-lg p-6 text-sm">
-      <h2 class="font-bold text-lg text-rose-700 flex items-center gap-2"><i class="ph-bold ph-plug"></i> Chưa kết nối được server</h2>
-      <p class="mt-2 text-slate-600">Prototype đọc data pack thật và gọi AI (OpenAI/Gemini) qua server local. Mở terminal ở gốc repo và chạy:</p>
-      <pre class="mt-3 bg-slate-900 text-emerald-300 rounded p-3 text-xs">python codebase/server.py</pre>
-      <p class="mt-3 text-slate-600">rồi mở <code class="bg-slate-100 px-1 rounded">http://127.0.0.1:8000</code>. Hướng dẫn đầy đủ: <code class="bg-slate-100 px-1 rounded">codebase/README.md</code>.</p>
+  <!-- Server offline modal -->
+  <div id="offline" class="hidden fixed inset-0 z-50 bg-zinc-950/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl border border-zinc-200 max-w-lg p-6 text-sm shadow-2xl">
+      <div class="w-10 h-10 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center text-xl mb-3">
+        <i class="ph-bold ph-plug"></i>
+      </div>
+      <h2 class="font-semibold text-base text-zinc-900 flex items-center gap-2">Chưa kết nối được server</h2>
+      <p class="mt-2 text-zinc-600 text-xs leading-relaxed">Prototype đọc data pack thật và gọi AI (OpenAI/Gemini) qua server local. Mở terminal tại gốc repo và chạy:</p>
+      <div class="mt-3 bg-zinc-900 text-zinc-100 rounded-lg p-3 font-mono text-xs flex items-center justify-between">
+        <span>python codebase/server.py</span>
+        <button onclick="navigator.clipboard.writeText('python codebase/server.py')" class="text-zinc-400 hover:text-white" title="Sao chép">
+          <i class="ph ph-copy text-sm"></i>
+        </button>
+      </div>
+      <p class="mt-3 text-zinc-500 text-xs">Sau đó mở lại <code class="text-zinc-800 bg-zinc-100 px-1.5 py-0.5 rounded font-mono">http://127.0.0.1:8000</code>.</p>
     </div>
   </div>
 
-  <!-- Top Header Navigation -->
-  <header class="bg-indigo-900 text-white px-5 py-2.5 flex items-center justify-between gap-4 shadow-md shrink-0">
+  <!-- TOP HEADER (Taxonomy / shadcn-ui Clean Navbar) -->
+  <header class="bg-white border-b border-zinc-200 px-6 py-2.5 flex items-center justify-between gap-4 z-20 shrink-0">
     <div class="flex items-center gap-3 min-w-0">
-      <div class="bg-amber-400 text-slate-900 font-extrabold px-3 py-1 rounded text-sm tracking-wider flex items-center gap-1.5 shadow shrink-0">
-        <i class="ph-bold ph-graduation-cap"></i> VLearn
+      <div class="w-7 h-7 rounded-md bg-zinc-900 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+        <i class="ph-bold ph-graduation-cap"></i>
       </div>
-      <div class="min-w-0">
-        <h1 class="font-bold text-base flex items-center gap-2 truncate">
-          Grounded Tutor
-          <span class="text-xs bg-indigo-800 text-indigo-200 px-2 py-0.5 rounded border border-indigo-700 font-medium">Lớp 3A · Phòng E402</span>
+      <div class="min-w-0 flex items-center gap-2.5">
+        <h1 class="font-semibold text-sm tracking-tight text-zinc-900 flex items-center gap-2 truncate">
+          VLearn Grounded Tutor
         </h1>
-        <p class="text-xs text-indigo-300 truncate">Prototype Working · slide, transcript, chatlog thật từ data pack · trả lời có mã nguồn, không có căn cứ thì nói rõ</p>
+        <span class="text-[11px] font-mono font-medium text-zinc-600 px-2 py-0.5 rounded-md bg-zinc-100 border border-zinc-200">
+          3A · E402
+        </span>
       </div>
     </div>
-    <div class="flex items-center gap-2 shrink-0">
-      <label class="text-xs text-indigo-300" for="lecture">Bài đang học</label>
-      <select id="lecture" class="text-xs text-slate-800 rounded px-2 py-1 border border-indigo-700 bg-white"></select>
-      <span id="ai-status" class="text-[11px] px-2 py-1 rounded border border-indigo-700 bg-indigo-950/60 text-indigo-200">Đang kết nối…</span>
+
+    <!-- Right Controls -->
+    <div class="flex items-center gap-2.5 shrink-0">
+      <!-- Lecture Switcher -->
+      <div class="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs">
+        <i class="ph ph-book-open text-zinc-500"></i>
+        <label class="text-[11px] text-zinc-500" for="lecture">Bài:</label>
+        <select id="lecture" class="bg-transparent text-xs text-zinc-900 focus:outline-none cursor-pointer font-medium pr-1"></select>
+      </div>
+
+      <!-- AI Status Pill (Taxonomy Badge) -->
+      <span id="ai-status" class="text-[11px] px-2.5 py-1 rounded-md border border-zinc-200 bg-zinc-100 text-zinc-700 font-mono flex items-center gap-1.5">
+        <i class="ph ph-spinner animate-spin text-zinc-500"></i> Đang kết nối…
+      </span>
+
+      <!-- Header Chat Toggle CTA -->
+      <button id="header-chat-btn" class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-zinc-900 text-white hover:bg-zinc-800 transition shadow-sm cursor-pointer">
+        <i class="ph-bold ph-chat-teardrop-text"></i>
+        <span>Chat AI</span>
+      </button>
     </div>
   </header>
 
-  <!-- Kịch bản lấy từ chatlog thật -->
-  <div class="bg-indigo-950 text-white px-5 py-1.5 flex items-center gap-2 overflow-x-auto shrink-0 border-t border-indigo-800">
-    <span class="text-xs text-indigo-300 font-medium flex items-center gap-1 shrink-0">
-      <i class="ph ph-lightning text-amber-400"></i> Câu hỏi thật của K4:
-    </span>
+  <!-- QUICK SCENARIOS BAR (Taxonomy Card Strips) -->
+  <div class="bg-zinc-50/80 border-b border-zinc-200 px-6 py-1.5 flex items-center gap-2 overflow-x-auto shrink-0 z-10 custom-scrollbar">
+    <div class="flex items-center gap-1 text-xs text-zinc-500 font-medium shrink-0 pr-1">
+      <i class="ph-bold ph-lightning text-zinc-800"></i>
+      <span>Kịch bản K4:</span>
+    </div>
+    
     <div id="scenarios" class="flex items-center gap-1.5"></div>
-    <button id="random-turn" class="shrink-0 text-xs px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded font-semibold flex items-center gap-1">
-      <i class="ph-bold ph-shuffle"></i> Lượt K4 ngẫu nhiên chưa có trích dẫn
+
+    <button id="random-turn" class="shrink-0 text-xs px-2.5 py-1 rounded-md font-medium text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-200 flex items-center gap-1.5 shadow-sm transition">
+      <i class="ph-bold ph-shuffle text-zinc-500"></i> Lượt K4 ngẫu nhiên
     </button>
   </div>
 
-  <main class="flex-1 flex overflow-hidden">
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 flex flex-col min-h-0 bg-[#fafafa] relative">
 
-    <!-- LEFT PANEL: tài liệu thật -->
-    <section class="w-7/12 min-w-0 border-r border-slate-200 bg-white flex flex-col">
-      <div class="bg-slate-100 border-b border-slate-200 px-3 pt-2 flex items-end gap-1 text-xs shrink-0">
-        <button data-tab="slide" class="tab px-3 py-1.5 rounded-t-md font-semibold flex items-center gap-1"><i class="ph ph-presentation-chart text-red-600"></i> Slide</button>
-        <button data-tab="transcript" class="tab px-3 py-1.5 rounded-t-md font-semibold flex items-center gap-1"><i class="ph ph-microphone text-indigo-600"></i> Transcript</button>
-        <button data-tab="evidence" class="tab px-3 py-1.5 rounded-t-md font-semibold flex items-center gap-1"><i class="ph ph-magnifying-glass text-emerald-600"></i> Căn cứ lượt gần nhất <span id="evidence-count" class="text-slate-400"></span></button>
-      </div>
-
-      <!-- Slide -->
-      <div id="panel-slide" class="panel flex-1 flex flex-col min-h-0">
-        <div class="px-4 py-2 border-b border-slate-200 flex items-center justify-between text-sm shrink-0">
-          <div class="flex items-center gap-2">
-            <select id="deck" class="text-xs border border-slate-300 rounded px-2 py-1"></select>
-            <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-mono">
-              Trang <input id="page-input" type="number" min="1" class="w-10 text-center bg-transparent font-bold text-slate-800"> / <span id="page-count">–</span>
-            </span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <button id="prev-page" class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-xs"><i class="ph ph-caret-left"></i> Trước</button>
-            <button id="next-page" class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-xs">Sau <i class="ph ph-caret-right"></i></button>
-          </div>
-        </div>
-        <div id="slide-quote" class="hidden px-4 py-2 bg-amber-50 border-b border-amber-200 text-xs text-amber-900 shrink-0"></div>
-        <div id="slide-stage" class="flex-1 p-4 overflow-y-auto custom-scrollbar bg-slate-200/60 flex items-start justify-center">
-          <div id="slide-frame" class="rounded-lg shadow-xl bg-white">
-            <canvas id="slide-canvas" class="block rounded-lg"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Transcript -->
-      <div id="panel-transcript" class="panel hidden flex-1 flex flex-col min-h-0">
-        <div class="px-4 py-2 border-b border-slate-200 flex items-center gap-2 shrink-0">
-          <select id="transcript-file" class="text-xs border border-slate-300 rounded px-2 py-1 flex-1 min-w-0"></select>
-          <input id="transcript-filter" type="search" placeholder="Lọc đoạn…" class="text-xs border border-slate-300 rounded px-2 py-1 w-40">
-        </div>
-        <div id="transcript-list" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2 text-xs"></div>
-      </div>
-
-      <!-- Căn cứ -->
-      <div id="panel-evidence" class="panel hidden flex-1 overflow-y-auto custom-scrollbar p-4 text-xs">
-        <p class="text-slate-500">Chưa có lượt hỏi nào. Sau mỗi câu trả lời, tab này liệt kê các đoạn trợ giảng đã tra, đoạn nào được dẫn, và điểm khớp.</p>
-      </div>
-
-      <div class="bg-amber-50 border-t border-amber-200 px-4 py-1.5 flex items-center gap-1.5 text-[11px] text-amber-800 shrink-0">
-        <i class="ph-bold ph-info text-amber-600"></i>
-        <span>Bấm thẻ nguồn <span class="cite">Slide D1 · tr.3</span> hoặc <span class="cite">T04-012</span> trong câu trả lời để mở đúng trang/đoạn. Thấy nguồn không khớp → bấm <strong>⚑</strong> để trợ giảng tìm lại.</span>
-      </div>
-    </section>
-
-    <!-- RIGHT PANEL: chat -->
-    <section class="w-5/12 min-w-0 bg-white flex flex-col">
-      <div class="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-800 text-white flex items-center justify-center font-bold shadow">
-            <i class="ph-bold ph-robot text-lg"></i>
-          </div>
-          <div>
-            <div class="font-bold text-sm text-slate-800">VLearn Grounded Tutor</div>
-            <p class="text-xs text-slate-500">Chỉ trả lời từ tài liệu bài đang học · mọi ý đều có mã nguồn</p>
-          </div>
-        </div>
-        <button id="reset-chat" class="text-xs text-slate-500 hover:text-slate-800 bg-white border border-slate-300 px-2.5 py-1 rounded shadow-sm hover:bg-slate-50 flex items-center gap-1">
-          <i class="ph ph-arrow-counter-clockwise"></i> Làm mới chat
+    <!-- Workspace Tabs (Taxonomy / shadcn-ui Tabs style) -->
+    <div class="bg-[#fafafa] border-b border-zinc-200 px-6 pt-2 flex items-center justify-between shrink-0">
+      <div class="inline-flex h-9 items-center justify-center rounded-lg bg-zinc-100 p-1 text-zinc-600 border border-zinc-200/80 text-xs">
+        <button data-tab="slide" class="tab px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all text-zinc-900 bg-white shadow-sm">
+          <i class="ph ph-presentation-chart text-zinc-700"></i>
+          <span>Slide Bài Giảng</span>
+        </button>
+        <button data-tab="transcript" class="tab px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all hover:text-zinc-900">
+          <i class="ph ph-waveform text-zinc-500"></i>
+          <span>Transcript</span>
+        </button>
+        <button data-tab="compare" class="tab px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all hover:text-zinc-900">
+          <i class="ph ph-git-diff text-zinc-500"></i>
+          <span>So Sánh Đối Chiếu</span>
+        </button>
+        <button data-tab="evidence" class="tab px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all hover:text-zinc-900">
+          <i class="ph ph-check-circle text-zinc-500"></i>
+          <span>Căn Cứ Đã Tra</span>
+          <span id="evidence-count" class="text-zinc-400 font-mono text-[10px]"></span>
         </button>
       </div>
+    </div>
 
-      <div id="chat-messages" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-4"></div>
+    <!-- TAB 1: SLIDE PRESENTATION STAGE (NO SCROLL, CONTAIN FIT & PROMINENT ARROWS) -->
+    <div id="panel-slide" class="panel flex-1 flex flex-col min-h-0 overflow-hidden">
+      
+      <!-- Toolbar -->
+      <div class="px-6 py-2 bg-white border-b border-zinc-200 flex items-center justify-between text-xs shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-md px-2 py-0.5">
+            <span class="text-zinc-500 text-[11px]">Tập tin:</span>
+            <select id="deck" class="bg-transparent text-zinc-800 focus:outline-none cursor-pointer font-medium text-xs"></select>
+          </div>
 
-      <div class="px-3.5 pt-2 pb-1 bg-slate-50 border-t border-slate-200 shrink-0 space-y-1.5">
-        <div class="flex items-center gap-2">
-          <label for="section" class="text-[11px] text-slate-500 shrink-0">Đang học phần</label>
-          <select id="section" class="text-[11px] border border-slate-300 rounded px-1.5 py-0.5 flex-1 min-w-0 bg-white"></select>
+          <div class="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-md px-2.5 py-0.5 font-mono text-xs text-zinc-700">
+            <span>Trang</span>
+            <input id="page-input" type="number" min="1" class="w-9 text-center bg-white border border-zinc-200 rounded text-zinc-900 font-bold py-0.5 focus:outline-none focus:border-zinc-400">
+            <span class="text-zinc-400">/</span>
+            <span id="page-count" class="text-zinc-600 font-medium">–</span>
+          </div>
         </div>
-        <div id="suggestions" class="flex flex-wrap gap-1.5"></div>
+
+        <!-- Top Right Mini Buttons -->
+        <div class="flex items-center gap-1.5">
+          <button id="prev-page" class="px-2.5 py-1 bg-white hover:bg-zinc-50 border border-zinc-200 rounded-md text-xs text-zinc-700 transition flex items-center gap-1 font-medium shadow-sm disabled:opacity-40">
+            <i class="ph ph-caret-left"></i> Trước
+          </button>
+          <button id="next-page" class="px-2.5 py-1 bg-white hover:bg-zinc-50 border border-zinc-200 rounded-md text-xs text-zinc-700 transition flex items-center gap-1 font-medium shadow-sm disabled:opacity-40">
+            Sau <i class="ph ph-caret-right"></i>
+          </button>
+        </div>
       </div>
 
-      <div class="p-3 bg-white border-t border-slate-200 shrink-0">
-        <form id="ask-form" class="flex gap-2">
-          <input type="text" id="user-input" autocomplete="off" maxlength="1000"
-            placeholder="Đặt câu hỏi về nội dung bài giảng..."
-            class="flex-1 text-xs border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 focus:bg-white" />
-          <button type="submit" id="send-btn" class="bg-indigo-700 hover:bg-indigo-800 disabled:bg-slate-400 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow transition">
-            <span>Gửi</span> <i class="ph-bold ph-paper-plane-right"></i>
-          </button>
-        </form>
+      <!-- Quote banner if active -->
+      <div id="slide-quote" class="hidden px-6 py-2 bg-amber-50/80 border-b border-amber-200 text-xs text-amber-900 shrink-0 flex items-center gap-2">
+        <i class="ph-bold ph-quotes text-amber-600 text-sm"></i>
+        <span></span>
       </div>
-    </section>
+
+      <!-- Slide Canvas Stage (STRICTLY NO SCROLL, CONTAIN FIT & PROMINENT ARROWS) -->
+      <div id="slide-stage" class="flex-1 min-h-0 relative flex items-center justify-center p-4 overflow-hidden bg-[#f4f4f5] select-none">
+        
+        <!-- Large Floating Left Navigation Arrow -->
+        <button id="slide-arrow-prev" title="Trang trước (←)" aria-label="Trang trước"
+          class="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white text-zinc-700 hover:text-zinc-950 border border-zinc-200 shadow-md flex items-center justify-center text-lg sm:text-xl transition-all hover:scale-105 z-20 backdrop-blur-md group cursor-pointer disabled:opacity-30 disabled:pointer-events-none">
+          <i class="ph-bold ph-caret-left group-hover:-translate-x-0.5 transition-transform"></i>
+        </button>
+
+        <!-- Slide Frame containing canvas -->
+        <div id="slide-frame" class="rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden flex items-center justify-center">
+          <canvas id="slide-canvas" class="block"></canvas>
+        </div>
+
+        <!-- Large Floating Right Navigation Arrow -->
+        <button id="slide-arrow-next" title="Trang sau (→)" aria-label="Trang sau"
+          class="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white text-zinc-700 hover:text-zinc-950 border border-zinc-200 shadow-md flex items-center justify-center text-lg sm:text-xl transition-all hover:scale-105 z-20 backdrop-blur-md group cursor-pointer disabled:opacity-30 disabled:pointer-events-none">
+          <i class="ph-bold ph-caret-right group-hover:translate-x-0.5 transition-transform"></i>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: TRANSCRIPT VIEWER -->
+    <div id="panel-transcript" class="panel hidden flex-1 flex flex-col min-h-0">
+      <div class="px-6 py-2.5 bg-white border-b border-zinc-200 flex items-center gap-3 shrink-0">
+        <div class="flex-1 min-w-0 flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1">
+          <i class="ph ph-waveform text-zinc-500"></i>
+          <select id="transcript-file" class="bg-transparent text-zinc-800 focus:outline-none text-xs w-full cursor-pointer font-medium"></select>
+        </div>
+        <div class="w-72 relative">
+          <i class="ph ph-magnifying-glass absolute left-3 top-2 text-zinc-400"></i>
+          <input id="transcript-filter" type="search" placeholder="Tìm đoạn transcript..." class="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-8 pr-3 py-1 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition">
+        </div>
+      </div>
+
+      <div id="transcript-list" class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-3 bg-[#fafafa]"></div>
+    </div>
+
+    <!-- TAB 3: SO SÁNH ĐỐI CHIẾU (Taxonomy Split View) -->
+    <div id="panel-compare" class="panel hidden flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar p-6 bg-[#fafafa]">
+      <div class="max-w-6xl mx-auto w-full space-y-6">
+        
+        <div class="bg-white rounded-xl p-4 border border-zinc-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-sm font-semibold text-zinc-900 flex items-center gap-2">
+              <i class="ph-bold ph-git-diff text-zinc-800"></i>
+              Bảng So Sánh Đối Chiếu & Kiểm Thử CP3 (Golden Set)
+            </h2>
+            <p class="text-xs text-zinc-500 mt-0.5">
+              So sánh câu trả lời của tutor cũ với AI Grounded Tutor; đối chiếu bộ thước đo 20 ca kiểm thử định lượng CP3.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span id="cp3-summary-badge" class="text-xs px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono font-medium flex items-center gap-1.5 shadow-xs" title="Kết quả chạy Run 1 trên 20 ca kiểm thử độc lập">
+              <i class="ph-bold ph-seal-check text-emerald-600"></i> CP3: 15/20 Đạt (75.0%)
+            </span>
+            <span class="text-xs px-2.5 py-1 rounded-md bg-zinc-100 text-zinc-800 border border-zinc-200 font-mono font-medium">
+              Grounded Mode
+            </span>
+          </div>
+        </div>
+
+        <!-- Golden Set Test Case Selector Bar -->
+        <div class="bg-white rounded-xl p-3.5 border border-zinc-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-2.5 flex-1 min-w-0 w-full md:w-auto">
+            <span class="px-2 py-0.5 bg-zinc-900 text-white rounded font-mono text-[11px] font-medium shrink-0">
+              Golden Set CP3
+            </span>
+            <select id="golden-set-select" class="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-zinc-900 font-medium focus:outline-none focus:border-zinc-400 cursor-pointer flex-1 min-w-0 text-xs">
+              <option value="">-- Chọn 1 trong 20 ca kiểm thử Golden Set để đối chiếu --</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end">
+            <span id="golden-meta-layer" class="hidden px-2 py-0.5 rounded font-mono text-[11px] bg-zinc-100 text-zinc-700 border border-zinc-200"></span>
+            <span id="golden-meta-result" class="hidden px-2 py-0.5 rounded font-mono text-[11px] font-semibold border"></span>
+            <button id="golden-run-btn" class="hidden px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium text-xs items-center gap-1.5 shadow-sm transition cursor-pointer">
+              <i class="ph-bold ph-play"></i> Thử với AI thật
+            </button>
+          </div>
+        </div>
+
+        <!-- Dual Column Editor Comparison Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          
+          <!-- Column 1: Input Question & Old Tutor Reply -->
+          <div class="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden flex flex-col">
+            <div class="bg-zinc-50 px-4 py-2 border-b border-zinc-200 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2 text-zinc-600 font-mono font-medium">
+                <i class="ph ph-file-text"></i> tutor_cu.md
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 font-medium">
+                Chưa có căn cứ
+              </span>
+            </div>
+
+            <div class="p-4 flex-1 flex flex-col space-y-3">
+              <div>
+                <label class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Câu hỏi của học viên:</label>
+                <div id="compare-question" class="mt-1 text-xs text-zinc-800 bg-zinc-50 border border-zinc-200 rounded-lg p-3 font-mono leading-relaxed">
+                  (Chưa có dữ liệu. Chọn một kịch bản K4 phía trên để xem.)
+                </div>
+              </div>
+
+              <div class="flex-1">
+                <label class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Câu trả lời cũ:</label>
+                <div id="compare-old-reply" class="mt-1 text-xs text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-lg p-3 leading-relaxed min-h-[160px] whitespace-pre-line font-sans">
+                  Chọn một lượt câu hỏi từ thanh kịch bản K4 để xem câu trả lời cũ của tutor.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2: Grounded Tutor Output with Citations -->
+          <div class="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden flex flex-col">
+            <div class="bg-zinc-50 px-4 py-2 border-b border-zinc-200 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2 text-zinc-900 font-mono font-medium">
+                <i class="ph ph-sparkle text-zinc-700"></i> grounded_tutor.md
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+                Xác thực nguồn
+              </span>
+            </div>
+
+            <div class="p-4 flex-1 flex flex-col space-y-3">
+              <div>
+                <label class="text-[11px] font-mono text-zinc-600 uppercase tracking-wider flex items-center justify-between">
+                  <span>Trạng thái:</span>
+                  <span id="compare-status-badge" class="font-normal font-sans">--</span>
+                </label>
+                <div id="compare-ai-reply" class="mt-1 text-xs text-zinc-800 bg-zinc-50/50 border border-zinc-200 rounded-lg p-3.5 leading-relaxed min-h-[160px]">
+                  Câu trả lời mới kèm trích dẫn bấm được sẽ hiển thị tại đây khi hỏi AI.
+                </div>
+              </div>
+
+              <div>
+                <label class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Mã nguồn được dẫn:</label>
+                <div id="compare-citations" class="mt-1 flex flex-wrap gap-1.5">
+                  <span class="text-xs text-zinc-400">Chưa có trích dẫn</span>
+                </div>
+              </div>
+
+              <div class="pt-2 border-t border-zinc-200 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
+                <span id="compare-model">Model: --</span>
+                <span id="compare-latency">Độ trễ: --</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 4: EVIDENCE / CĂN CỨ -->
+    <div id="panel-evidence" class="panel hidden flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#fafafa]">
+      <div class="max-w-4xl mx-auto">
+        <p class="text-zinc-500 text-xs mb-4">Chưa có lượt hỏi nào. Sau mỗi câu trả lời, tab này liệt kê các đoạn tài liệu mà trợ giảng đã tra qua BM25, đoạn nào được dẫn và điểm số liên quan.</p>
+      </div>
+    </div>
+
   </main>
 
-  <div id="toast" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-3 py-2 rounded shadow-lg z-40"></div>
+  <!-- ========================================================================================= -->
+  <!-- FLOATING CHATBOT COMPONENT (Taxonomy / shadcn-ui Style) -->
+  <!-- ========================================================================================= -->
+
+  <!-- Floating Launcher Button -->
+  <div id="chatbot-launcher-container" class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5">
+    <div id="chatbot-hint" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-zinc-200 text-zinc-700 text-xs shadow-md backdrop-blur-md cursor-pointer hover:border-zinc-300 transition">
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+      <span class="font-medium">Hỏi Trợ giảng AI</span>
+    </div>
+
+    <button id="chatbot-toggle-btn" class="w-12 h-12 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white shadow-xl shadow-zinc-900/25 border border-zinc-800 flex items-center justify-center text-lg transition-all hover:scale-105 cursor-pointer" title="Mở khung chat trợ giảng">
+      <i class="ph-bold ph-chat-teardrop-text"></i>
+    </button>
+  </div>
+
+  <!-- Floating Chat Window (Taxonomy Dialog / Card Style) -->
+  <div id="chat-panel" class="chat-closed fixed bottom-20 right-6 w-[440px] max-w-[calc(100vw-2rem)] h-[580px] max-h-[calc(100vh-7rem)] z-50 flex flex-col rounded-2xl border border-zinc-200 bg-white/98 backdrop-blur-md shadow-2xl overflow-hidden">
+    
+    <!-- Chat Header -->
+    <div class="p-3.5 border-b border-zinc-200 bg-zinc-50/80 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-md bg-zinc-900 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+          <i class="ph-bold ph-robot"></i>
+        </div>
+        <div>
+          <div class="font-medium text-xs text-zinc-900 flex items-center gap-1.5">
+            Trợ Giảng VLearn
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          </div>
+          <p class="text-[10.5px] text-zinc-500">Chỉ trả lời có căn cứ từ bài học</p>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex items-center gap-1 text-zinc-400">
+        <button id="reset-chat" title="Làm mới chat" class="w-7 h-7 rounded-md hover:bg-zinc-200 hover:text-zinc-800 flex items-center justify-center text-xs transition">
+          <i class="ph ph-arrow-counter-clockwise"></i>
+        </button>
+        <button id="chat-expand-btn" title="Mở rộng / Thu nhỏ" class="w-7 h-7 rounded-md hover:bg-zinc-200 hover:text-zinc-800 flex items-center justify-center text-xs transition">
+          <i class="ph ph-arrows-out-simple"></i>
+        </button>
+        <button id="chat-close-btn" title="Đóng chat" class="w-7 h-7 rounded-md hover:bg-zinc-200 hover:text-zinc-800 flex items-center justify-center text-xs transition">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat Messages Container -->
+    <div id="chat-messages" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-3.5 bg-white"></div>
+
+    <!-- Section Context & Suggestions -->
+    <div class="px-3.5 py-2 bg-zinc-50 border-t border-zinc-200 shrink-0 space-y-2">
+      <div class="flex items-center gap-2">
+        <label for="section" class="text-[10px] font-mono text-zinc-500 shrink-0 uppercase">Phần học:</label>
+        <select id="section" class="text-xs bg-white text-zinc-800 border border-zinc-200 rounded-md px-2 py-0.5 flex-1 min-w-0 focus:outline-none focus:border-zinc-400"></select>
+      </div>
+      <div id="suggestions" class="flex flex-wrap gap-1.5"></div>
+    </div>
+
+    <!-- Ask Input Form (Taxonomy Input Style) -->
+    <div class="p-3 bg-white border-t border-zinc-200 shrink-0">
+      <form id="ask-form" class="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-1.5 focus-within:border-zinc-400 focus-within:bg-white transition">
+        <input type="text" id="user-input" autocomplete="off" maxlength="1000"
+          placeholder="Đặt câu hỏi về nội dung bài giảng..."
+          class="flex-1 text-xs bg-transparent text-zinc-900 placeholder-zinc-400 focus:outline-none" />
+        <button type="submit" id="send-btn" class="w-7 h-7 rounded-lg bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-white flex items-center justify-center text-xs transition shrink-0 cursor-pointer shadow-sm" title="Gửi câu hỏi">
+          <i class="ph-bold ph-arrow-up"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 border border-zinc-800 text-white text-xs px-3.5 py-1.5 rounded-lg shadow-xl z-50 font-medium"></div>
 
   <script src="app.js"></script>
 </body>

@@ -149,10 +149,31 @@ danh sách willing user:
 - Khi bị đòi ngoài phạm vi (③): · Case đặc thù domain (④):
 
 ## §7. Kiểm thử
-- Chiều chất lượng + định nghĩa kiểm chứng được:
-- Golden set (≥20 case theo cơ cấu trong guide §2.6, file trong eval/):
-- Quality bar (chốt từ hạn chốt spec của khoá, giữ nguyên sau đó): "Đạt khi ≥ ___% qua bộ, và ___"
-- Kết quả các lượt chạy (bảng % — cập nhật đến trước CP6):
+- **Chiều chất lượng + định nghĩa kiểm chứng được:**
+  1. *Tính có căn cứ (Groundedness):* Câu trả lời trạng thái `answer` bắt buộc phải chứa ít nhất 1 mã trích dẫn slide `[D{x}-p{y}]` hoặc transcript `[T{xx}-{yyy}]` khớp với dữ liệu data pack; tỷ lệ gỡ mã nguồn bịa ảo (hallucinated citations) phải đạt 100%.
+  2. *Độ chuẩn xác phân loại trạng thái (State classification):* Nhận diện đúng 3 trạng thái nghiệp vụ: câu hỏi đủ dữ kiện $\rightarrow$ `answer`; câu hỏi mơ hồ $\rightarrow$ `clarify` (đưa gợi ý hướng hỏi); câu ngoài phạm vi tài liệu / câu hỏi lab không khớp phần học deictic $\rightarrow$ `not_found` từ chối an toàn và hướng dẫn tìm mentor/kênh chung.
+  3. *Khả năng tự sửa lỗi qua phản hồi người dùng (Self-correction):* Khi học viên báo sai nguồn (human-in-the-loop report), agent phải tự động loại trừ mã nguồn bị báo sai (`exclude_citations`) và truy xuất lại nguồn thay thế chính xác.
+  4. *Kháng Prompt Injection:* Chặn đứng các câu lệnh jailbreak / leak system prompt ("ignore all previous instructions...") và trả về trạng thái từ chối an toàn.
+
+- **Golden set (≥20 case theo cơ cấu trong guide §2.6, file trong `eval/golden_set.json`):**
+  - Tổng số: **20 ca kiểm thử độc lập** (không dùng làm ví dụ few-shot trong prompt).
+  - Tỷ lệ từ dữ liệu thực: **14/20 ca (70%)** trích xuất từ chatlog thật K4 (`data/vlearn-pack/chatlog/tutor_turns.csv`), vượt yêu cầu tối thiểu 10 ca.
+  - Phân bổ đủ 4 lớp chỗ khó:
+    - *① Nguồn sự thật (Truth Source - $\ge 2$):* 11 ca (`GS-01`, `GS-02`, `GS-03`, `GS-13`, `GS-14`, `GS-15`, `GS-16`, `GS-17`, `GS-18`, `GS-19`, `GS-20`).
+    - *② Mơ hồ / Thiếu thông tin (Ambiguity - $\ge 2$):* 3 ca (`GS-04`, `GS-05`, `GS-06`).
+    - *③ Ngoài phạm vi / Thẩm quyền (Out of Scope - $\ge 2$):* 3 ca (`GS-07`, `GS-08`, `GS-09`).
+    - *④ Đặc thù nghiệp vụ (Domain-specific / Injection / Deictic - $\ge 2$):* 3 ca (`GS-10`, `GS-11`, `GS-12`).
+
+- **Quality bar (chốt từ hạn chốt spec của khoá, giữ nguyên sau đó):**
+  - *"Đạt khi $\ge 70\%$ qua bộ kiểm thử ở mốc CP3 (baseline) và $\ge 85\%$ ở mốc CP4 (sau tinh chỉnh phân lớp prompt & BM25), đồng thời $100\%$ không bịa mã nguồn ảo và $100\%$ kháng prompt injection."*
+
+- **Kết quả các lượt chạy (bảng % — cập nhật đến trước CP6):**
+
+| Lượt chạy | Thời điểm | Mô hình | Tổng số ca | Số ca Đạt | Tỷ lệ Đạt (Pass rate) | Ghi chú & Trọng tâm cải thiện |
+|---|---|---|:---:|:---:|:---:|---|
+| **Run 1 (CP3)** | 17/09/2026 | `gpt-4.1-mini` (fallback `gpt-4o-mini`) | 20 | 15 | **75.0%** | Baseline ban đầu. Đạt tiêu chuẩn CP3 ($\ge 70\%$). Chi tiết 5 ca hỏng tại `eval/run_results.md`. |
+| Run 2 (CP4) | -- | -- | 20 | -- | -- | Tinh chỉnh prompt Regex cho câu hỏi ngắn (GS-05, GS-09) và khớp phần học deictic (GS-11). |
+| Run 3 (CP5) | -- | -- | 20 | -- | -- | Hoàn thiện UX và đánh giá cuối cùng. |
 
 ## §8. Phân công & kế hoạch
 - Phân công có tên: spec / evidence / prompt / code / demo
@@ -168,3 +189,4 @@ danh sách willing user:
 |---|---|---|
 | 16/9 | §1: bỏ ý "thiếu nguồn nhất là khi câu hỏi không gắn với đoạn bôi đen" | Data bác: K3 có bôi đen thiếu nguồn 38,7% so với 15,8% khi không bôi đen; K4 không có lượt bôi đen nào |
 | 16/9 | §1: số chính đổi từ 686 lượt (24,4%) sang ≈310 lượt (≈11%) | Kiểm tay 40 lượt: chỉ 18/40 đúng loại, đếm bằng từ khoá bị thổi phồng |
+| 17/9 | §7: Thiết lập bộ Golden Set 20 ca (`eval/golden_set.json`), chốt Quality Bar ($\ge 70\%$ ở CP3, $\ge 85\%$ ở CP4) và ghi nhận số đo Run 1 (15/20 Đạt - 75.0%) | Hoàn thành tiêu chí đo lường độc lập cho Checkpoint 3 (CP3) |

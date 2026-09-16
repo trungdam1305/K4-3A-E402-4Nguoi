@@ -1,4 +1,5 @@
-// VLearn Grounded Tutor — giao diện prototype. Mọi dữ liệu lấy từ server.py (data pack thật + OpenAI/Gemini).
+// VLearn Grounded Tutor — giao diện prototype (Taxonomy shadcn-ui/taxonomy Light Style).
+// Mọi dữ liệu lấy từ server.py (data pack thật + OpenAI/Gemini REST).
 'use strict';
 
 const $ = (sel) => document.querySelector(sel);
@@ -11,11 +12,58 @@ const state = {
   transcriptTitles: {},    // file → tên buổi
   sources: {},             // mã nguồn → thông tin đoạn (gom từ mọi lượt)
   runs: {},                // run_id → {run, raw, section}
+  currentTurn: null,
   history: [],
   busy: false,
   pdf: { deck: null, doc: null, page: 1, task: null, docs: {} },
   transcript: { file: null, paras: [] },
+  goldenCases: [],
+  goldenResults: {},
+  currentGoldenCase: null,
 };
+
+// ------------------------------------------------------------------ floating chat widget state
+const chatState = {
+  isOpen: false,
+  isDocked: false,
+};
+
+function openChat() {
+  const panel = $('#chat-panel');
+  const hint = $('#chatbot-hint');
+  if (!panel) return;
+  chatState.isOpen = true;
+  panel.classList.remove('chat-closed');
+  panel.classList.add('chat-open');
+  if (hint) hint.classList.add('opacity-0', 'pointer-events-none');
+  setTimeout(() => $('#user-input')?.focus(), 120);
+}
+
+function closeChat() {
+  const panel = $('#chat-panel');
+  const hint = $('#chatbot-hint');
+  if (!panel) return;
+  chatState.isOpen = false;
+  panel.classList.remove('chat-open');
+  panel.classList.add('chat-closed');
+  if (hint) hint.classList.remove('opacity-0', 'pointer-events-none');
+}
+
+function toggleChat() {
+  if (chatState.isOpen) closeChat();
+  else openChat();
+}
+
+function toggleExpandChat() {
+  const panel = $('#chat-panel');
+  const icon = $('#chat-expand-btn i');
+  if (!panel) return;
+  chatState.isDocked = !chatState.isDocked;
+  panel.classList.toggle('chat-docked', chatState.isDocked);
+  if (icon) {
+    icon.className = chatState.isDocked ? 'ph ph-arrows-in-simple' : 'ph ph-arrows-out-simple';
+  }
+}
 
 // ------------------------------------------------------------------ tiện ích
 
@@ -34,10 +82,11 @@ async function api(path, body) {
 let toastTimer;
 function toast(msg) {
   const el = $('#toast');
+  if (!el) return;
   el.textContent = msg;
   el.classList.remove('hidden');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.add('hidden'), 2200);
+  toastTimer = setTimeout(() => el.classList.add('hidden'), 2400);
 }
 
 function citeLabel(id) {
@@ -80,7 +129,7 @@ function renderMd(text) {
       out.push(`<li>${inlineMd(m[1])}</li>`);
     } else {
       closeList();
-      if ((m = line.match(/^#{1,4}\s+(.*)$/))) out.push(`<p class="font-semibold text-slate-900">${inlineMd(m[1])}</p>`);
+      if ((m = line.match(/^#{1,4}\s+(.*)$/))) out.push(`<p class="font-semibold text-zinc-900 mt-2 mb-1">${inlineMd(m[1])}</p>`);
       else if (line.trim()) out.push(`<p>${inlineMd(line)}</p>`);
     }
   }
@@ -89,23 +138,26 @@ function renderMd(text) {
   return `<div class="md">${out.join('')}</div>`;
 }
 
-// ------------------------------------------------------------------ tab trái
+// ------------------------------------------------------------------ tab điều hướng chính
 
 function switchTab(name) {
   document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('hidden', p.id !== `panel-${name}`));
   document.querySelectorAll('.tab').forEach((t) => {
     const on = t.dataset.tab === name;
+    t.classList.toggle('text-zinc-900', on);
     t.classList.toggle('bg-white', on);
-    t.classList.toggle('text-slate-900', on);
-    t.classList.toggle('text-slate-500', !on);
+    t.classList.toggle('shadow-sm', on);
+    t.classList.toggle('text-zinc-500', !on);
+    t.classList.toggle('bg-transparent', !on);
   });
   if (name === 'slide' && state.pdf.doc) renderPage();
-  if (name === 'transcript' && !state.transcript.file && $('#transcript-file').value) {
+  if (name === 'transcript' && !state.transcript.file && $('#transcript-file')?.value) {
     loadTranscript($('#transcript-file').value).catch((e) => toast(e.message));
   }
 }
 
 function flash(el) {
+  if (!el) return;
   el.classList.remove('highlight-active');
   void el.offsetWidth;
   el.classList.add('highlight-active');
@@ -124,6 +176,7 @@ async function loadDeck(deck) {
   $('#page-count').textContent = state.pdf.doc.numPages;
 }
 
+// Render slide fit completely inside stage (contain scale, no vertical or horizontal scrollbar)
 async function renderPage() {
   const { doc } = state.pdf;
   if (!doc) return;
@@ -132,18 +185,55 @@ async function renderPage() {
   $('#page-input').value = page;
   const pdfPage = await doc.getPage(page);
   const stage = $('#slide-stage');
+  if (!stage) return;
+
   const base = pdfPage.getViewport({ scale: 1 });
-  const cssWidth = Math.max(320, stage.clientWidth - 32);
+  // Chừa khoảng trống 110px cho 2 nút mũi tên trái phải và padding
+  const padX = stage.clientWidth > 768 ? 120 : 64;
+  const padY = 24;
+  const availWidth = Math.max(200, stage.clientWidth - padX);
+  const availHeight = Math.max(150, stage.clientHeight - padY);
+
+  // Contain scaling: vừa khít cả chiều rộng lẫn chiều cao màn hình mà không bao giờ bị tràn (không cần cuộn)
+  const scaleW = availWidth / base.width;
+  const scaleH = availHeight / base.height;
+  const fitScale = Math.min(scaleW, scaleH);
+
   const dpr = window.devicePixelRatio || 1;
-  const viewport = pdfPage.getViewport({ scale: (cssWidth / base.width) * dpr });
+  const viewport = pdfPage.getViewport({ scale: fitScale * dpr });
   const canvas = $('#slide-canvas');
   if (state.pdf.task) state.pdf.task.cancel();
   canvas.width = viewport.width;
   canvas.height = viewport.height;
-  canvas.style.width = `${cssWidth}px`;
-  canvas.style.height = `${viewport.height / dpr}px`;
+  canvas.style.width = `${Math.floor(base.width * fitScale)}px`;
+  canvas.style.height = `${Math.floor(base.height * fitScale)}px`;
+
+  // Cập nhật trạng thái disabled của các nút chuyển trang
+  const prevBtn = $('#slide-arrow-prev');
+  const nextBtn = $('#slide-arrow-next');
+  if (prevBtn) prevBtn.disabled = (page <= 1);
+  if (nextBtn) nextBtn.disabled = (page >= doc.numPages);
+  if ($('#prev-page')) $('#prev-page').disabled = (page <= 1);
+  if ($('#next-page')) $('#next-page').disabled = (page >= doc.numPages);
+
   state.pdf.task = pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport });
   try { await state.pdf.task.promise; } catch (e) { if (e?.name !== 'RenderingCancelledException') throw e; }
+}
+
+function prevSlide() {
+  if (state.pdf.page > 1) {
+    state.pdf.page -= 1;
+    renderPage();
+    $('#slide-quote')?.classList.add('hidden');
+  }
+}
+
+function nextSlide() {
+  if (state.pdf.doc && state.pdf.page < state.pdf.doc.numPages) {
+    state.pdf.page += 1;
+    renderPage();
+    $('#slide-quote')?.classList.add('hidden');
+  }
 }
 
 async function showSlide(deck, page, quote) {
@@ -158,7 +248,7 @@ async function showSlide(deck, page, quote) {
   }
   const box = $('#slide-quote');
   if (quote) {
-    box.innerHTML = `<i class="ph-bold ph-quotes"></i> Trợ giảng dẫn <strong>${escapeHtml(quote.label)}</strong> — ${escapeHtml(quote.title)}`;
+    box.querySelector('span').innerHTML = `Trợ giảng dẫn <strong>${escapeHtml(quote.label)}</strong> — ${escapeHtml(quote.title)}`;
     box.classList.remove('hidden');
     flash($('#slide-frame'));
   } else {
@@ -176,7 +266,7 @@ async function loadTranscript(file) {
 }
 
 async function showTranscript(file, highlightId) {
-  $('#transcript-file').value = file;  // để switchTab (nếu có tải) cũng tải đúng file này
+  $('#transcript-file').value = file;
   switchTab('transcript');
   await loadTranscript(file);
   if (highlightId) {
@@ -194,13 +284,16 @@ function renderTranscript() {
   let lastHeading = null;
   const html = state.transcript.paras.map((p) => {
     const hidden = filter && !p.text.toLowerCase().includes(filter) && !p.id.toLowerCase().includes(filter);
-    const heading = p.title !== lastHeading ? `<div class="pt-2 font-bold text-indigo-900 ${hidden ? 'hidden' : ''}">${escapeHtml(p.title.split(' · ').slice(1).join(' · ') || p.title)}</div>` : '';
+    const heading = p.title !== lastHeading ? `<div class="pt-4 pb-1 font-semibold text-xs text-zinc-900 flex items-center gap-2 ${hidden ? 'hidden' : ''}"><span class="w-1.5 h-1.5 rounded-full bg-zinc-800"></span>${escapeHtml(p.title.split(' · ').slice(1).join(' · ') || p.title)}</div>` : '';
     if (!hidden) lastHeading = p.title;
-    return `${heading}<div id="para-${p.id}" class="rounded-md border border-slate-200 p-2.5 ${hidden ? 'hidden' : ''}">
-      <span class="font-mono text-[10.5px] font-bold text-indigo-700">[${p.id}]</span>
-      <span class="text-slate-700 whitespace-pre-line leading-relaxed">${escapeHtml(p.text)}</span></div>`;
+    return `${heading}<div id="para-${p.id}" class="bg-white border border-zinc-200 hover:border-zinc-300 rounded-lg p-3 shadow-sm ${hidden ? 'hidden' : ''} group transition">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="font-mono text-[11px] font-medium text-zinc-800 bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded">[${p.id}]</span>
+        <button type="button" data-ask="Giải thích đoạn transcript ${p.id}" class="opacity-0 group-hover:opacity-100 text-[10.5px] text-zinc-600 hover:text-zinc-900 px-2 py-0.5 rounded bg-zinc-100 hover:bg-zinc-200 transition">Hỏi AI đoạn này</button>
+      </div>
+      <div class="text-zinc-700 whitespace-pre-line leading-relaxed text-xs">${escapeHtml(p.text)}</div></div>`;
   }).join('');
-  $('#transcript-list').innerHTML = html || '<p class="text-slate-500">Không có đoạn nào khớp.</p>';
+  $('#transcript-list').innerHTML = html || '<p class="text-zinc-400 text-xs">Không có đoạn nào khớp.</p>';
 }
 
 async function openSource(id) {
@@ -215,35 +308,84 @@ function renderEvidence(run) {
   const rows = run.retrieved.map((r) => {
     const s = state.sources[r.id] || {};
     const scope = r.scope === 'lecture'
-      ? '<span class="px-1.5 rounded bg-indigo-100 text-indigo-700">bài đang học</span>'
-      : '<span class="px-1.5 rounded bg-slate-200 text-slate-600">bài khác · chỉ để chỉ đường</span>';
-    const mark = cited.has(r.id) ? '<span class="px-1.5 rounded bg-emerald-100 text-emerald-700 font-semibold">được dẫn</span>' : '';
-    return `<div class="border border-slate-200 rounded-md p-2.5 mb-2">
-      <div class="flex items-center gap-1.5 flex-wrap">${citeChip(r.id)} ${scope} ${mark}
-        <span class="ml-auto text-slate-400 font-mono">BM25 ${r.score}</span></div>
-      <div class="font-semibold text-slate-800 mt-1">${escapeHtml(s.title || '')}</div>
-      <div class="text-slate-500 mt-0.5">${escapeHtml((s.snippet || '').replace(/\s*\n\s*/g, ' · '))}</div></div>`;
+      ? '<span class="px-2 py-0.5 rounded bg-zinc-100 text-zinc-800 border border-zinc-200 text-[10px] font-mono font-medium">bài đang học</span>'
+      : '<span class="px-2 py-0.5 rounded bg-zinc-50 text-zinc-500 border border-zinc-200 text-[10px] font-mono">bài khác · chỉ để chỉ đường</span>';
+    const mark = cited.has(r.id) ? '<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium text-[10px]">được dẫn</span>' : '';
+    return `<div class="bg-white border border-zinc-200 hover:border-zinc-300 rounded-lg p-3.5 mb-2.5 shadow-sm transition">
+      <div class="flex items-center gap-2 flex-wrap">${citeChip(r.id)} ${scope} ${mark}
+        <span class="ml-auto text-zinc-500 font-mono text-xs">BM25: ${r.score}</span></div>
+      <div class="font-medium text-zinc-900 mt-1.5 text-xs">${escapeHtml(s.title || '')}</div>
+      <div class="text-zinc-600 mt-0.5 text-xs leading-relaxed">${escapeHtml((s.snippet || '').replace(/\s*\n\s*/g, ' · '))}</div></div>`;
   }).join('');
-  const excluded = run.excluded?.length ? `<p class="mb-2 text-purple-700">Đã loại theo phản hồi của bạn: ${run.excluded.map(escapeHtml).join(', ')}</p>` : '';
+  const excluded = run.excluded?.length ? `<p class="mb-3 text-zinc-700 bg-zinc-100 border border-zinc-200 rounded-lg p-2.5 text-xs">Đã loại theo phản hồi: ${run.excluded.map(escapeHtml).join(', ')}</p>` : '';
   $('#panel-evidence').innerHTML = `
-    <p class="text-slate-500 mb-2">Câu hỏi: <strong class="text-slate-800">${escapeHtml(run.question)}</strong>
-    — tra ${run.retrieved.length} đoạn trong ${run.latency_ms.retrieval} ms. Chỉ đoạn "bài đang học" được dùng làm căn cứ.</p>
-    ${excluded}${rows || '<p class="text-slate-500">Không tìm thấy đoạn nào có từ khoá khớp.</p>'}`;
+    <div class="max-w-4xl mx-auto">
+      <div class="bg-white rounded-xl p-3.5 mb-3.5 border border-zinc-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-[11px] text-zinc-500 font-mono uppercase font-medium">Câu hỏi:</span>
+          <h3 class="text-xs font-semibold text-zinc-900 mt-0.5">${escapeHtml(run.question)}</h3>
+        </div>
+        <div class="text-right text-xs font-mono text-zinc-500">
+          Tra <span class="text-zinc-900 font-bold">${run.retrieved.length}</span> đoạn trong <span class="text-emerald-600 font-bold">${run.latency_ms.retrieval} ms</span>
+        </div>
+      </div>
+      ${excluded}${rows || '<p class="text-zinc-400 text-xs">Không tìm thấy đoạn nào có từ khoá khớp.</p>'}
+    </div>`;
   $('#evidence-count').textContent = `(${run.retrieved.length})`;
+}
+
+// Cập nhật tab so sánh đối chiếu Taxonomy style
+function updateComparison(run, turn) {
+  const qEl = $('#compare-question');
+  const oldEl = $('#compare-old-reply');
+  const aiEl = $('#compare-ai-reply');
+  const badgeEl = $('#compare-status-badge');
+  const citeEl = $('#compare-citations');
+  const modelEl = $('#compare-model');
+  const latEl = $('#compare-latency');
+
+  if (qEl && run) qEl.textContent = run.question;
+  if (turn && oldEl) {
+    oldEl.textContent = turn.original_reply || 'Không có dữ liệu câu trả lời cũ.';
+  }
+
+  if (run && aiEl) {
+    aiEl.innerHTML = renderMd(run.answer);
+  }
+
+  if (run && badgeEl) {
+    const [cls, icon, label] = STATUS[run.status] || STATUS.not_found;
+    badgeEl.innerHTML = `<span class="inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-xs font-medium ${cls}"><i class="ph-bold ${icon}"></i> ${escapeHtml(label(run))}</span>`;
+  }
+
+  if (run && citeEl) {
+    const allCites = [...(run.citations || []), ...(run.where_ids || [])];
+    if (allCites.length) {
+      citeEl.innerHTML = allCites.map((id) => citeChip(id)).join(' ');
+    } else {
+      citeEl.innerHTML = '<span class="text-xs text-rose-600">Không có mã nguồn xác thực</span>';
+    }
+  }
+
+  if (run && modelEl) modelEl.textContent = `Model: ${run.model || 'Không dùng AI'}`;
+  if (run && latEl) {
+    const totalMs = run.latency_ms?.total;
+    latEl.textContent = `Độ trễ: ${totalMs >= 1000 ? (totalMs / 1000).toFixed(1) + ' s' : totalMs + ' ms'}`;
+  }
 }
 
 // ------------------------------------------------------------------ chat
 
 function scrollChat() {
   const c = $('#chat-messages');
-  c.scrollTop = c.scrollHeight;
+  if (c) c.scrollTop = c.scrollHeight;
 }
 
 function aiBubble(inner) {
   const div = document.createElement('div');
   div.className = 'flex items-start gap-2.5';
-  div.innerHTML = `<div class="w-7 h-7 rounded-full bg-indigo-700 text-white flex items-center justify-center shrink-0 text-xs font-bold">AI</div>
-    <div class="bubble bg-slate-100 text-slate-800 text-xs rounded-2xl rounded-tl-sm p-3.5 max-w-[92%] shadow-sm border border-slate-200 min-w-0">${inner}</div>`;
+  div.innerHTML = `<div class="w-6 h-6 rounded-md bg-zinc-900 text-white flex items-center justify-center shrink-0 text-xs font-bold shadow-sm"><i class="ph-bold ph-robot"></i></div>
+    <div class="bubble bg-zinc-50 text-zinc-800 text-xs rounded-2xl rounded-tl-sm p-3.5 max-w-[92%] shadow-sm border border-zinc-200 min-w-0">${inner}</div>`;
   $('#chat-messages').appendChild(div);
   scrollChat();
   return div.querySelector('.bubble');
@@ -252,37 +394,43 @@ function aiBubble(inner) {
 function welcome() {
   const lec = state.lectures[state.lecture];
   aiBubble(`
-    <p class="font-semibold mb-1 text-indigo-900">Chào bạn! Mình là trợ giảng VLearn ở chế độ "có căn cứ".</p>
-    <p class="text-slate-600 mb-2 leading-relaxed">Mình trả lời dựa trên <strong>slide và transcript của ${escapeHtml(lec?.title || 'bài đang học')}</strong>.
-    Mỗi ý có thẻ nguồn — bấm vào để mở đúng trang slide hoặc đoạn transcript mà kiểm lại.</p>
-    <ul class="text-[11px] text-slate-500 border-t border-slate-200 pt-2 space-y-0.5">
-      <li><i class="ph ph-shield-check text-indigo-600"></i> Không có trong tài liệu bài này → mình nói rõ và chỉ chỗ nên tìm, không đoán.</li>
-      <li><i class="ph ph-question text-amber-600"></i> Câu hỏi quá ngắn/mơ hồ → mình hỏi lại, bạn bấm chọn.</li>
-      <li><i class="ph ph-flag text-rose-600"></i> Mình có thể dẫn sai trang → bấm ⚑ cạnh nguồn, mình tìm lại mà không dùng nguồn đó.</li>
-    </ul>`);
+    <p class="font-semibold mb-1 text-zinc-900 text-xs flex items-center gap-1.5">
+      <span>Chào bạn! Mình là Trợ Giảng VLearn.</span>
+    </p>
+    <p class="text-zinc-600 mb-2 leading-relaxed text-xs">Mình hỗ trợ trả lời dựa trên <strong>slide &amp; transcript của ${escapeHtml(lec?.title || 'bài đang học')}</strong>.
+    Mỗi ý đều có mã nguồn xác thực — bấm để mở đúng trang slide hoặc đoạn transcript.</p>
+    <div class="text-[11px] text-zinc-500 border-t border-zinc-200 pt-2 space-y-1">
+      <div class="flex items-center gap-2"><i class="ph-bold ph-shield-check text-emerald-600"></i> Không có trong bài → Nói rõ và chỉ chỗ nên tìm.</div>
+      <div class="flex items-center gap-2"><i class="ph-bold ph-question text-amber-600"></i> Câu hỏi mơ hồ → Hỏi lại kèm gợi ý.</div>
+      <div class="flex items-center gap-2"><i class="ph-bold ph-flag text-rose-600"></i> Nguồn không khớp → Bấm ⚑ để tìm lại.</div>
+    </div>`);
 }
 
 function addUser(text, turn) {
+  state.currentTurn = turn;
   const div = document.createElement('div');
-  div.className = 'flex items-start justify-end gap-2';
+  div.className = 'flex items-start justify-end gap-2.5';
   let meta = '';
   if (turn) {
     const oldBadge = turn.original_has_citation
-      ? '<span class="text-emerald-700">có trích dẫn</span>'
-      : '<span class="text-rose-700 font-semibold">không trích dẫn</span>';
-    meta = `<div class="mb-1.5 text-[10.5px] text-indigo-100 flex flex-wrap gap-x-2">
-        <span><i class="ph ph-database"></i> Câu hỏi thật · ${escapeHtml(turn.turn_id)} · ${escapeHtml(turn.cohort)} · ${escapeHtml(turn.lecture_code)} · ${escapeHtml(turn.asked_at)}</span>
-        ${turn.section ? `<span>Phần: “${escapeHtml(turn.section)}”</span>` : ''}</div>`;
-    const old = `<details class="mt-2 bg-white/95 text-slate-700 rounded-lg p-2">
-        <summary class="cursor-pointer text-[11px] font-semibold">Tutor cũ đã trả lời (${oldBadge}, nước đi ${escapeHtml(turn.move_used || '—')})</summary>
-        <div class="mt-1.5 max-h-48 overflow-y-auto custom-scrollbar whitespace-pre-line text-[11px] leading-relaxed">${escapeHtml(turn.original_reply)}</div>
+      ? '<span class="text-emerald-700 font-medium">có trích dẫn</span>'
+      : '<span class="text-rose-600 font-medium">không trích dẫn</span>';
+    meta = `<div class="mb-1 text-[10.5px] text-zinc-300 flex flex-wrap gap-x-2 font-mono">
+        <span>${escapeHtml(turn.turn_id)} · ${escapeHtml(turn.cohort)}</span>
+        ${turn.section ? `<span>[${escapeHtml(turn.section)}]</span>` : ''}</div>`;
+    const old = `<details class="mt-2 bg-zinc-800 text-zinc-200 rounded-lg p-2.5 border border-zinc-700 text-xs">
+        <summary class="cursor-pointer text-[11px] font-medium text-zinc-300 hover:text-white flex items-center justify-between">
+          <span>Tutor cũ (${oldBadge})</span>
+          <i class="ph ph-caret-down text-xs"></i>
+        </summary>
+        <div class="mt-1.5 max-h-40 overflow-y-auto custom-scrollbar whitespace-pre-line text-[11px] leading-relaxed text-zinc-300 border-t border-zinc-700 pt-1.5">${escapeHtml(turn.original_reply)}</div>
       </details>`;
-    div.innerHTML = `<div class="bg-indigo-600 text-white text-xs rounded-2xl rounded-tr-sm p-3 max-w-[88%] shadow-sm min-w-0">
-        ${meta}<div class="whitespace-pre-line">${escapeHtml(text)}</div>${turn.selected ? `<div class="mt-1 text-[11px] text-indigo-200">Đoạn bôi đen: “${escapeHtml(turn.selected.slice(0, 160))}”</div>` : ''}${old}</div>
-      <div class="w-7 h-7 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center shrink-0 text-[10px] font-bold">HV</div>`;
+    div.innerHTML = `<div class="bg-zinc-900 text-white text-xs rounded-2xl rounded-tr-sm p-3 max-w-[88%] shadow-sm min-w-0">
+        ${meta}<div class="whitespace-pre-line leading-relaxed">${escapeHtml(text)}</div>${turn.selected ? `<div class="mt-1 text-[11px] text-zinc-300 bg-zinc-800 p-1.5 rounded border border-zinc-700 font-mono">“${escapeHtml(turn.selected.slice(0, 160))}”</div>` : ''}${old}</div>
+      <div class="w-6 h-6 rounded-md bg-zinc-100 border border-zinc-200 text-zinc-700 flex items-center justify-center shrink-0 text-[10px] font-bold">HV</div>`;
   } else {
-    div.innerHTML = `<div class="bg-indigo-600 text-white text-xs rounded-2xl rounded-tr-sm p-3 max-w-[85%] shadow-sm whitespace-pre-line">${escapeHtml(text)}</div>
-      <div class="w-7 h-7 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center shrink-0 text-xs font-bold">Tôi</div>`;
+    div.innerHTML = `<div class="bg-zinc-900 text-white text-xs rounded-2xl rounded-tr-sm p-3 max-w-[85%] shadow-sm whitespace-pre-line leading-relaxed">${escapeHtml(text)}</div>
+      <div class="w-6 h-6 rounded-md bg-zinc-100 border border-zinc-200 text-zinc-700 flex items-center justify-center shrink-0 text-[10px] font-bold">Tôi</div>`;
   }
   $('#chat-messages').appendChild(div);
   scrollChat();
@@ -290,81 +438,89 @@ function addUser(text, turn) {
 
 function systemNote(html) {
   const div = document.createElement('div');
-  div.className = 'text-center text-[11px] text-slate-500';
-  div.innerHTML = `<span class="inline-block bg-slate-100 border border-slate-200 rounded-full px-3 py-1">${html}</span>`;
+  div.className = 'text-center text-[11px] text-zinc-500 my-2';
+  div.innerHTML = `<span class="inline-block bg-zinc-100 border border-zinc-200 rounded-md px-3 py-0.5 text-zinc-700">${html}</span>`;
   $('#chat-messages').appendChild(div);
   scrollChat();
 }
 
 const STATUS = {
-  answer: ['bg-emerald-100 text-emerald-800 border-emerald-200', 'ph-seal-check', (r) => `Có căn cứ · ${r.citations.length} nguồn`],
-  clarify: ['bg-amber-100 text-amber-800 border-amber-200', 'ph-question', () => 'Cần hỏi lại cho rõ'],
-  not_found: ['bg-rose-100 text-rose-800 border-rose-200', 'ph-shield-warning', () => 'Không có trong tài liệu bài này'],
-  ungrounded: ['bg-orange-100 text-orange-800 border-orange-200', 'ph-warning', () => 'Không đủ căn cứ — đã ẩn câu trả lời'],
-  search_only: ['bg-slate-200 text-slate-700 border-slate-300', 'ph-magnifying-glass', () => 'Chưa qua AI — chỉ gợi ý đoạn khớp từ khoá'],
+  answer: ['bg-emerald-50 text-emerald-700 border-emerald-200', 'ph-seal-check', (r) => `Có căn cứ · ${r.citations.length} nguồn`],
+  clarify: ['bg-amber-50 text-amber-700 border-amber-200', 'ph-question', () => 'Cần hỏi lại cho rõ'],
+  not_found: ['bg-rose-50 text-rose-700 border-rose-200', 'ph-shield-warning', () => 'Không có trong bài'],
+  ungrounded: ['bg-orange-50 text-orange-700 border-orange-200', 'ph-warning', () => 'Không đủ căn cứ'],
+  search_only: ['bg-zinc-100 text-zinc-700 border-zinc-200', 'ph-magnifying-glass', () => 'Chỉ tìm kiếm từ khoá'],
 };
 
 function renderRun(bubble, run) {
   const [cls, icon, label] = STATUS[run.status] || STATUS.not_found;
-  const badges = [`<span class="inline-flex items-center gap-1 border rounded-full px-2 py-0.5 font-semibold ${cls}"><i class="ph-bold ${icon}"></i> ${escapeHtml(label(run))}</span>`];
-  if (run.mode !== 'llm' && run.status !== 'search_only') badges.push('<span class="border rounded-full px-2 py-0.5 bg-slate-200 text-slate-700 border-slate-300">Chưa qua AI</span>');
-  if (run.flags.includes('injection')) badges.push('<span class="border rounded-full px-2 py-0.5 bg-purple-100 text-purple-800 border-purple-200"><i class="ph ph-shield"></i> Câu hỏi có chỉ dẫn lạ — không làm theo</span>');
-  if (run.flags.includes('section_mismatch')) badges.push('<span class="border rounded-full px-2 py-0.5 bg-rose-50 text-rose-700 border-rose-200"><i class="ph ph-link-break"></i> Tài liệu tìm được thuộc phần khác</span>');
-  if (run.excluded.length) badges.push(`<span class="border rounded-full px-2 py-0.5 bg-purple-50 text-purple-700 border-purple-200">Tìm lại, bỏ nguồn ${run.excluded.map(escapeHtml).join(', ')}</span>`);
+  const badges = [`<span class="inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-[10.5px] font-medium ${cls}"><i class="ph-bold ${icon}"></i> ${escapeHtml(label(run))}</span>`];
+  if (run.mode !== 'llm' && run.status !== 'search_only') badges.push('<span class="border rounded-md px-2 py-0.5 bg-zinc-100 text-zinc-600 border-zinc-200">Chưa qua AI</span>');
+  if (run.flags.includes('injection')) badges.push('<span class="border rounded-md px-2 py-0.5 bg-rose-50 text-rose-700 border-rose-200"><i class="ph ph-shield"></i> Chặn prompt lạ</span>');
+  if (run.flags.includes('section_mismatch')) badges.push('<span class="border rounded-md px-2 py-0.5 bg-amber-50 text-amber-700 border-amber-200"><i class="ph ph-link-break"></i> Thuộc phần khác</span>');
+  if (run.excluded.length) badges.push(`<span class="border rounded-md px-2 py-0.5 bg-zinc-100 text-zinc-600 border-zinc-200">Bỏ nguồn ${run.excluded.map(escapeHtml).join(', ')}</span>`);
 
   let body = run.status === 'ungrounded'
-    ? `<p class="text-orange-800 mb-1">Trợ giảng viết được câu trả lời nhưng không gắn được vào đoạn tài liệu nào, nên không hiển thị như một câu trả lời chắc chắn.</p>
-       <details><summary class="cursor-pointer text-[11px] text-slate-500">Xem bản nháp chưa có căn cứ</summary><div class="mt-1 opacity-70">${renderMd(run.answer)}</div></details>`
+    ? `<p class="text-amber-700 mb-1 font-medium">Trợ giảng viết được câu trả lời nhưng không gắn được vào đoạn tài liệu nào, nên đã ẩn để tránh đoán sai.</p>
+       <details class="bg-zinc-100 rounded-lg p-2 border border-zinc-200"><summary class="cursor-pointer text-[11px] text-zinc-600 hover:text-zinc-900">Xem bản nháp chưa có căn cứ</summary><div class="mt-1.5 opacity-70">${renderMd(run.answer)}</div></details>`
     : renderMd(run.answer);
 
   if (run.clarify_options?.length) {
-    body += `<div class="mt-2 space-y-1.5">${run.clarify_options.map((o) => `
-      <button type="button" data-ask="${escapeHtml(o)}" data-run="${run.run_id}" class="w-full text-left bg-white hover:bg-indigo-50 border border-slate-300 hover:border-indigo-300 p-2 rounded-lg text-xs font-medium text-slate-700 flex items-center justify-between gap-2">
-        <span>${escapeHtml(o)}</span><i class="ph ph-caret-right text-slate-400"></i></button>`).join('')}</div>`;
+    body += `<div class="mt-2.5 space-y-1.5">${run.clarify_options.map((o) => `
+      <button type="button" data-ask="${escapeHtml(o)}" data-run="${run.run_id}" class="w-full text-left bg-white hover:bg-zinc-50 border border-zinc-200 hover:border-zinc-300 p-2.5 rounded-lg text-xs text-zinc-800 flex items-center justify-between gap-2 shadow-sm transition">
+        <span>${escapeHtml(o)}</span><i class="ph ph-caret-right text-zinc-400"></i></button>`).join('')}</div>`;
   }
   if (run.where_to_look) {
-    body += `<div class="mt-2 p-2 rounded-lg bg-white border border-slate-200"><div class="font-semibold text-slate-700 mb-0.5"><i class="ph ph-compass"></i> Nên tìm ở đâu</div>${renderMd(run.where_to_look)}</div>`;
+    body += `<div class="mt-2.5 p-2.5 rounded-lg bg-zinc-50 border border-zinc-200"><div class="font-medium text-zinc-800 mb-1 flex items-center gap-1.5"><i class="ph ph-compass"></i> Gợi ý chỗ tìm</div>${renderMd(run.where_to_look)}</div>`;
   }
   if (run.removed_citations?.length) {
-    body += `<p class="mt-2 text-[11px] text-orange-700"><i class="ph ph-eraser"></i> Đã gỡ ${run.removed_citations.length} mã nguồn không nằm trong tài liệu đã tra: ${run.removed_citations.map(escapeHtml).join(', ')}</p>`;
+    body += `<p class="mt-2 text-[11px] text-amber-700"><i class="ph ph-eraser"></i> Đã gỡ ${run.removed_citations.length} mã nguồn bịa: ${run.removed_citations.map(escapeHtml).join(', ')}</p>`;
   }
-  if (run.error) body += `<p class="mt-2 text-[11px] text-rose-700"><i class="ph ph-plug"></i> Không gọi được AI: ${escapeHtml(run.error)}</p>`;
-  if (run.model_fallback_errors?.length) body += `<p class="mt-2 text-[10.5px] text-slate-500"><i class="ph ph-arrows-left-right"></i> Đã chuyển sang ${escapeHtml(run.model)} vì: ${escapeHtml(run.model_fallback_errors.join(' · '))}</p>`;
+  if (run.error) body += `<p class="mt-2 text-[11px] text-rose-600"><i class="ph ph-plug"></i> Không gọi được AI: ${escapeHtml(run.error)}</p>`;
+  if (run.model_fallback_errors?.length) body += `<p class="mt-2 text-[10.5px] text-zinc-500"><i class="ph ph-arrows-left-right"></i> Chuyển sang ${escapeHtml(run.model)}: ${escapeHtml(run.model_fallback_errors.join(' · '))}</p>`;
 
-  const sources = run.citations.map((id) => `<span class="inline-flex items-center">${citeChip(id)}<button type="button" data-report="${id}" data-run="${run.run_id}" title="Nguồn này không khớp — tìm lại" class="text-slate-400 hover:text-rose-600 px-0.5">⚑</button></span>`).join(' ');
+  const sources = run.citations.map((id) => `<span class="inline-flex items-center">${citeChip(id)}<button type="button" data-report="${id}" data-run="${run.run_id}" title="Nguồn không khớp — tìm lại" class="text-zinc-400 hover:text-rose-600 px-0.5 text-xs">⚑</button></span>`).join(' ');
   const ms = run.latency_ms.total >= 1000 ? `${(run.latency_ms.total / 1000).toFixed(1)} s` : `${run.latency_ms.total} ms`;
 
   bubble.innerHTML = `
     <div class="flex flex-wrap gap-1 mb-2 text-[10.5px]">${badges.join('')}</div>
     ${body}
-    ${run.reason ? `<p class="mt-2 text-[11px] text-slate-500 italic"><i class="ph ph-lightbulb"></i> Vì sao: ${escapeHtml(run.reason)}</p>` : ''}
-    <div class="mt-2.5 pt-2 border-t border-slate-200 flex items-center justify-between gap-2">
-      <div class="flex flex-wrap items-center gap-1 min-w-0">${sources ? `<span class="text-[10.5px] text-slate-500">Nguồn:</span> ${sources}` : ''}</div>
-      <div class="flex items-center gap-1.5 text-slate-400 shrink-0">
-        <button type="button" data-vote="up" data-run="${run.run_id}" title="Hữu ích" class="hover:text-emerald-600"><i class="ph ph-thumbs-up"></i></button>
-        <button type="button" data-vote="down" data-run="${run.run_id}" title="Chưa đúng" class="hover:text-rose-600"><i class="ph ph-thumbs-down"></i></button>
+    ${run.reason ? `<p class="mt-2.5 text-[11px] text-zinc-500 italic flex items-center gap-1.5"><i class="ph ph-lightbulb text-amber-600"></i> Vì sao: ${escapeHtml(run.reason)}</p>` : ''}
+    <div class="mt-2.5 pt-2 border-t border-zinc-200 flex items-center justify-between gap-2">
+      <div class="flex flex-wrap items-center gap-1 min-w-0">${sources ? `<span class="text-[10.5px] text-zinc-500">Nguồn:</span> ${sources}` : ''}</div>
+      <div class="flex items-center gap-2 text-zinc-400 shrink-0">
+        <button type="button" data-vote="up" data-run="${run.run_id}" title="Hữu ích" class="hover:text-zinc-800 transition"><i class="ph ph-thumbs-up"></i></button>
+        <button type="button" data-vote="down" data-run="${run.run_id}" title="Chưa đúng" class="hover:text-rose-600 transition"><i class="ph ph-thumbs-down"></i></button>
       </div>
     </div>
-    <div class="mt-1 text-[10px] text-slate-400 flex flex-wrap gap-x-2">
-      <span>${escapeHtml(run.model || 'không dùng AI')}</span><span>${ms}</span>
-      <button type="button" data-evidence="${run.run_id}" class="underline hover:text-slate-600">xem ${run.retrieved.length} đoạn đã tra</button>
+    <div class="mt-1.5 text-[10px] text-zinc-400 flex flex-wrap items-center justify-between font-mono">
+      <div class="flex items-center gap-2">
+        <span class="text-zinc-600 font-medium">${escapeHtml(run.model || 'no-ai')}</span>
+        <span>•</span>
+        <span>${ms}</span>
+      </div>
+      <button type="button" data-evidence="${run.run_id}" class="text-zinc-600 hover:underline">xem ${run.retrieved.length} đoạn đã tra</button>
     </div>`;
   scrollChat();
+  updateComparison(run, state.currentTurn);
 }
 
 async function ask(raw, { display, turn = null, exclude = [], section = null, then = null } = {}) {
   if (state.busy) { toast('Đang chờ câu trả lời trước…'); return; }
   state.busy = true;
   $('#send-btn').disabled = true;
+  openChat(); // Tự động mở khung chat
   if (display !== null) addUser(display ?? raw, turn);
   const sec = section ?? (turn ? '' : $('#section').value);
-  const bubble = aiBubble('<span class="text-slate-500"><i class="ph ph-spinner animate-spin"></i> Đang tra slide &amp; transcript rồi hỏi AI… <span class="elapsed">0</span>s</span>');
+  const bubble = aiBubble('<span class="text-zinc-500 flex items-center gap-1.5"><i class="ph ph-spinner animate-spin"></i> Đang tra cứu tài liệu… <span class="elapsed font-mono">0</span>s</span>');
   const started = Date.now();
   const timer = setInterval(() => { const e = bubble.querySelector('.elapsed'); if (e) e.textContent = Math.round((Date.now() - started) / 1000); }, 500);
   try {
     const run = await api('/api/ask', { question: raw, lecture: state.lecture, section: sec, history: state.history.slice(-4), exclude });
     Object.assign(state.sources, run.sources);
-    if (run.model) $('#ai-status').lastChild.textContent = ` AI thật: ${run.model}`;
+    if (run.model) {
+      $('#ai-status').innerHTML = `<i class="ph-bold ph-lightning text-emerald-600"></i> AI: ${escapeHtml(run.model)}`;
+    }
     state.runs[run.run_id] = { run, raw, section: sec };
     renderRun(bubble, run);
     renderEvidence(run);
@@ -375,7 +531,7 @@ async function ask(raw, { display, turn = null, exclude = [], section = null, th
       setTimeout(() => reportSource(run.run_id, run.citations[0]), 1500);
     }
   } catch (e) {
-    bubble.innerHTML = `<p class="text-rose-700">Không nhận được câu trả lời: ${escapeHtml(e.message)}</p>`;
+    bubble.innerHTML = `<p class="text-rose-600">Không nhận được câu trả lời: ${escapeHtml(e.message)}</p>`;
   } finally {
     clearInterval(timer);
     state.busy = false;
@@ -418,32 +574,177 @@ async function setLecture(id, { announce = true } = {}) {
   const suggestions = id === 'day2'
     ? ['Double Diamond gồm những bước nào?', 'Khi nào không nên dùng AI?', 'Hướng dẫn nộp bài lab ở đâu?']
     : ['Attention hoạt động thế nào?', 'Temperature và top_p khác nhau ra sao?', 'LangGraph dùng để làm gì?'];
-  $('#suggestions').innerHTML = '<span class="text-[11px] text-slate-400 py-0.5">Thử hỏi:</span>' + suggestions.map((s) =>
-    `<button type="button" data-ask="${escapeHtml(s)}" class="text-[11px] bg-white hover:bg-indigo-50 hover:text-indigo-700 border border-slate-300 px-2 py-0.5 rounded-full text-slate-600">${escapeHtml(s)}</button>`).join('');
+  $('#suggestions').innerHTML = '<span class="text-[10px] text-zinc-500 py-0.5 font-mono uppercase font-medium">Gợi ý:</span>' + suggestions.map((s) =>
+    `<button type="button" data-ask="${escapeHtml(s)}" class="text-[11px] bg-white hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200 px-2.5 py-0.5 rounded-md text-zinc-700 shadow-sm transition">${escapeHtml(s)}</button>`).join('');
 
   if (announce) systemNote(`Đang học: <strong>${escapeHtml(lec.title)}</strong>`);
   state.transcript.file = null;
   if (decks.length) {
     state.pdf.page = 1;
-    showSlide(decks[0], 1).catch(() => {});  // không chặn chat khi PDF còn đang tải
+    showSlide(decks[0], 1).catch(() => {});
   }
 }
 
 async function loadScenarios() {
   const { scenarios } = await api('/api/scenarios');
   const color = {
-    happy: 'text-emerald-300', 'low-confidence': 'text-amber-300', failure: 'text-rose-300', correction: 'text-purple-300',
+    happy: 'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100',
+    'low-confidence': 'text-amber-700 border-amber-200 bg-amber-50 hover:bg-amber-100',
+    failure: 'text-rose-700 border-rose-200 bg-rose-50 hover:bg-rose-100',
+    correction: 'text-purple-700 border-purple-200 bg-purple-50 hover:bg-purple-100',
   };
   const pathName = { happy: 'chuẩn', 'low-confidence': 'mơ hồ', failure: 'khó', correction: 'sửa nguồn' };
   $('#scenarios').innerHTML = scenarios.map((s, i) => `
     <button type="button" data-scenario="${i}" title="${escapeHtml(s.turn.question)}"
-      class="shrink-0 text-xs px-2 py-1 bg-indigo-800 hover:bg-indigo-700 rounded border border-indigo-700 ${color[s.path] || ''} hover:text-white whitespace-nowrap">
-      <span class="opacity-70">${escapeHtml(pathName[s.path] || s.path)} ·</span> ${escapeHtml(s.label)}</button>`).join('');
+      class="shrink-0 text-xs px-2.5 py-1 rounded-md border transition-all ${color[s.path] || 'text-zinc-700 border-zinc-200 bg-white'} hover:scale-105 whitespace-nowrap flex items-center gap-1.5 font-medium shadow-sm">
+      <span class="opacity-70 font-semibold">${escapeHtml(pathName[s.path] || s.path)} ·</span> ${escapeHtml(s.label)}</button>`).join('');
   state.scenarios = scenarios;
+}
+
+async function loadGoldenSet() {
+  try {
+    const cases = await api('/api/eval/golden_set');
+    state.goldenCases = cases || [];
+
+    let resData = null;
+    try {
+      resData = await api('/api/eval/results');
+    } catch {
+      // Kết quả kiểm thử chưa có hoặc đang chạy
+    }
+
+    if (resData && resData.cases) {
+      for (const c of resData.cases) {
+        state.goldenResults[c.id] = c;
+      }
+      if (resData.summary) {
+        const badge = $('#cp3-summary-badge');
+        if (badge) {
+          badge.innerHTML = `<i class="ph-bold ph-seal-check text-emerald-600"></i> CP3: ${resData.summary.passed}/${resData.summary.total} Đạt (${resData.summary.pass_rate}%)`;
+        }
+      }
+    }
+
+    const select = $('#golden-set-select');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">-- Chọn 1 trong 20 ca kiểm thử Golden Set để đối chiếu --</option>' +
+      state.goldenCases.map((c) => {
+        const res = state.goldenResults[c.id];
+        const mark = res ? (res.passed ? '✅' : '❌') : '';
+        const turnLabel = c.turn_id ? `[${c.turn_id}]` : `[Mẫu nhóm]`;
+        return `<option value="${c.id}">${escapeHtml(`${c.id} · ${turnLabel} ${c.question.slice(0, 48)}... ${mark}`)}</option>`;
+      }).join('');
+
+    select.addEventListener('change', async (ev) => {
+      const id = ev.target.value;
+      if (!id) {
+        $('#golden-meta-layer')?.classList.add('hidden');
+        $('#golden-meta-result')?.classList.add('hidden');
+        $('#golden-run-btn')?.classList.add('hidden');
+        return;
+      }
+      const c = state.goldenCases.find((x) => x.id === id);
+      if (!c) return;
+      state.currentGoldenCase = c;
+
+      const layerTag = $('#golden-meta-layer');
+      const resTag = $('#golden-meta-result');
+      const runBtn = $('#golden-run-btn');
+
+      if (layerTag) {
+        layerTag.textContent = c.difficulty_layer;
+        layerTag.classList.remove('hidden');
+      }
+
+      const res = state.goldenResults[c.id];
+      if (resTag) {
+        if (res) {
+          resTag.textContent = res.passed ? 'CP3: ĐẠT' : 'CP3: CHƯA ĐẠT';
+          resTag.className = res.passed
+            ? 'px-2 py-0.5 rounded font-mono text-[11px] font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200'
+            : 'px-2 py-0.5 rounded font-mono text-[11px] font-semibold border bg-rose-50 text-rose-700 border-rose-200';
+          if (res.failure_reason) resTag.title = res.failure_reason;
+        } else {
+          resTag.textContent = 'Chưa đo';
+          resTag.className = 'px-2 py-0.5 rounded font-mono text-[11px] font-semibold border bg-zinc-100 text-zinc-600 border-zinc-200';
+        }
+        resTag.classList.remove('hidden');
+      }
+
+      if (runBtn) {
+        runBtn.classList.remove('hidden');
+        runBtn.classList.add('flex');
+      }
+
+      // Cập nhật khung so sánh
+      const qEl = $('#compare-question');
+      const oldEl = $('#compare-old-reply');
+      const aiEl = $('#compare-ai-reply');
+      const badgeEl = $('#compare-status-badge');
+      const citeEl = $('#compare-citations');
+      const modelEl = $('#compare-model');
+      const latEl = $('#compare-latency');
+
+      if (qEl) qEl.textContent = c.question;
+
+      let oldTurn = null;
+      if (c.turn_id && c.turn_id.startsWith('T')) {
+        try {
+          const { turn } = await api(`/api/turns/${c.turn_id}`);
+          oldTurn = turn;
+          if (turn && oldEl) {
+            oldEl.textContent = turn.original_reply || '(Không có câu trả lời cũ của tutor)';
+          }
+        } catch {
+          if (oldEl) oldEl.textContent = '(Không tìm thấy lượt tương ứng trong chatlog)';
+        }
+      } else {
+        if (oldEl) oldEl.textContent = '(Ca kiểm thử mẫu độc lập do nhóm biên soạn để kiểm thử chỗ khó)';
+      }
+      state.currentTurn = oldTurn;
+
+      if (res) {
+        const [cls, icon, label] = STATUS[res.actual_status] || STATUS.not_found;
+        if (badgeEl) {
+          badgeEl.innerHTML = `<span class="inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-xs font-medium ${cls}"><i class="ph-bold ${icon}"></i> ${escapeHtml(label({}))}</span>`;
+        }
+        if (citeEl) {
+          if (res.citations && res.citations.length) {
+            citeEl.innerHTML = res.citations.map((citeId) => citeChip(citeId)).join(' ');
+          } else {
+            citeEl.innerHTML = '<span class="text-xs text-zinc-400">Không có trích dẫn</span>';
+          }
+        }
+        if (modelEl) modelEl.textContent = `Model: ${res.model || 'gpt-4.1-mini'}`;
+        if (latEl) latEl.textContent = `Độ trễ: ${res.latency_ms ? (res.latency_ms / 1000).toFixed(2) + ' s' : '--'}`;
+
+        if (aiEl) {
+          if (res.passed) {
+            aiEl.innerHTML = `<div class="p-2.5 bg-emerald-50/70 rounded-lg border border-emerald-200 mb-2 text-emerald-800 text-xs flex items-center gap-1.5"><i class="ph-bold ph-check-circle text-sm text-emerald-600 shrink-0"></i> <span><strong>Kết quả Run 1: Đạt chuẩn nghiệm thu CP3</strong> (Kỳ vọng: <code>${c.expected_status}</code>).</span></div><p class="text-zinc-600 text-xs italic">Bấm "Thử với AI thật" bên trên để chạy trực tiếp câu này qua LLM.</p>`;
+          } else {
+            aiEl.innerHTML = `<div class="p-2.5 bg-rose-50/70 rounded-lg border border-rose-200 mb-2 text-rose-800 text-xs"><p class="font-medium flex items-center gap-1.5"><i class="ph-bold ph-x-circle text-sm text-rose-600 shrink-0"></i> <span><strong>Kết quả Run 1: Chưa đạt</strong> (Kỳ vọng: <code>${c.expected_status}</code> vs Thực tế: <code>${res.actual_status}</code>).</span></p><p class="mt-1 text-[11px] text-rose-700 leading-relaxed">${escapeHtml(res.failure_reason || '')}</p></div><p class="text-zinc-600 text-xs italic">Bấm "Thử với AI thật" bên trên để kiểm tra kết quả hiện tại.</p>`;
+          }
+        }
+      }
+    });
+
+    $('#golden-run-btn')?.addEventListener('click', async () => {
+      const c = state.currentGoldenCase;
+      if (!c) return;
+      if (c.lecture && c.lecture !== state.lecture) await setLecture(c.lecture);
+      openChat();
+      await ask(c.question, { display: c.question, turn: state.currentTurn, section: c.section, exclude: c.exclude_citations || [] });
+    });
+
+  } catch (e) {
+    console.warn('Could not load golden set:', e);
+  }
 }
 
 async function runTurn(turn, lecture, then) {
   if (lecture && lecture !== state.lecture) await setLecture(lecture);
+  openChat();
   await ask(turn.question, { display: turn.question_core || turn.question, turn, then });
 }
 
@@ -455,7 +756,8 @@ document.addEventListener('click', (ev) => {
   if (t.dataset.cite) openSource(t.dataset.cite);
   else if (t.dataset.report) reportSource(t.dataset.run, t.dataset.report);
   else if (t.dataset.ask) {
-    const origin = state.runs[t.dataset.run];  // lựa chọn hỏi lại → giữ ngữ cảnh phần đang học của câu gốc
+    const origin = state.runs[t.dataset.run];
+    openChat();
     ask(t.dataset.ask, origin ? { section: origin.run.context.section || origin.section } : {});
   }
   else if (t.dataset.tab) switchTab(t.dataset.tab);
@@ -468,6 +770,33 @@ document.addEventListener('click', (ev) => {
   } else if (t.dataset.scenario !== undefined) {
     const s = state.scenarios[Number(t.dataset.scenario)];
     runTurn(s.turn, s.lecture, s.then);
+  }
+});
+
+// Floating Chatbot Widget Button Listeners
+$('#chatbot-toggle-btn')?.addEventListener('click', toggleChat);
+$('#chatbot-hint')?.addEventListener('click', openChat);
+$('#header-chat-btn')?.addEventListener('click', openChat);
+$('#chat-close-btn')?.addEventListener('click', closeChat);
+$('#chat-expand-btn')?.addEventListener('click', toggleExpandChat);
+
+// Slide Navigation Listeners (Cả nút mũi tên nổi và nút trên thanh công cụ)
+$('#slide-arrow-prev')?.addEventListener('click', prevSlide);
+$('#slide-arrow-next')?.addEventListener('click', nextSlide);
+$('#prev-page')?.addEventListener('click', prevSlide);
+$('#next-page')?.addEventListener('click', nextSlide);
+
+// Hỗ trợ phím mũi tên trái/phải bàn phím khi đang xem slide
+window.addEventListener('keydown', (ev) => {
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+  const slideTabActive = !$('#panel-slide')?.classList.contains('hidden');
+  if (!slideTabActive) return;
+  if (ev.key === 'ArrowLeft') {
+    ev.preventDefault();
+    prevSlide();
+  } else if (ev.key === 'ArrowRight') {
+    ev.preventDefault();
+    nextSlide();
   }
 });
 
@@ -489,13 +818,15 @@ $('#random-turn').addEventListener('click', async () => {
 $('#lecture').addEventListener('change', (ev) => setLecture(ev.target.value));
 $('#reset-chat').addEventListener('click', () => { $('#chat-messages').innerHTML = ''; state.history = []; welcome(); });
 $('#deck').addEventListener('change', (ev) => showSlide(ev.target.value, 1));
-$('#prev-page').addEventListener('click', () => { state.pdf.page -= 1; renderPage(); $('#slide-quote').classList.add('hidden'); });
-$('#next-page').addEventListener('click', () => { state.pdf.page += 1; renderPage(); $('#slide-quote').classList.add('hidden'); });
 $('#page-input').addEventListener('change', (ev) => { state.pdf.page = Number(ev.target.value) || 1; renderPage(); });
 $('#transcript-file').addEventListener('change', (ev) => showTranscript(ev.target.value));
 $('#transcript-filter').addEventListener('input', renderTranscript);
+
 let resizeTimer;
-window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderPage, 200); });
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderPage, 150);
+});
 
 // ------------------------------------------------------------------ khởi động
 
@@ -510,11 +841,11 @@ window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer
   }
   const pill = $('#ai-status');
   if (health.llm) {
-    pill.innerHTML = `<i class="ph-bold ph-lightning text-emerald-400"></i> AI thật: ${escapeHtml(health.model)}`;
-    pill.className = 'text-[11px] px-2 py-1 rounded border border-emerald-600 bg-emerald-900/60 text-emerald-100';
+    pill.innerHTML = `<i class="ph-bold ph-lightning text-emerald-600"></i> AI: ${escapeHtml(health.model)}`;
+    pill.className = 'text-[11px] px-2.5 py-1 rounded-md border border-zinc-200 bg-zinc-100 text-zinc-800 font-mono font-medium';
   } else {
     pill.textContent = 'Chưa có API key — chỉ tìm kiếm';
-    pill.className = 'text-[11px] px-2 py-1 rounded border border-amber-500 bg-amber-900/60 text-amber-100';
+    pill.className = 'text-[11px] px-2.5 py-1 rounded-md border border-zinc-200 bg-zinc-100 text-zinc-500 font-mono';
   }
   pill.title = `Thứ tự model: ${(health.models || []).join(' → ')}
 ${health.slide_pages} trang slide · ${health.transcript_paragraphs} đoạn transcript · ${health.chat_turns} lượt chatlog`;
@@ -526,6 +857,7 @@ ${health.slide_pages} trang slide · ${health.transcript_paragraphs} đoạn tra
   await setLecture('day1', { announce: false });
   welcome();
   loadScenarios().catch((e) => toast(`Không tải được kịch bản: ${e.message}`));
+  loadGoldenSet().catch((e) => console.warn('Lỗi tải golden set:', e));
 
   // Link chia sẻ một lượt chatlog: index.html#turn=T10472
   const m = location.hash.match(/turn=(T\d{5})/);

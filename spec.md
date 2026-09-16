@@ -15,6 +15,11 @@ Loại: [ ] Tối ưu tính năng có sẵn  [ ] Tính năng mới
   - Số liệu mining / kết quả khảo sát (n = ?, % xác nhận):
   - ≥5 quote/ví dụ nguyên văn + nguồn:
 
+danh sách willing user: 1. Đào Đức Hải - 2A202602752 (E402)
+2. Nguyễn Xuân Trường Giang - 2A202602446 (E402)
+3. Võ Doanh Nhân - 2A202602770 (E402)
+4. Nguyễn Nhân Sâm - 2a202602672 (E402)
+
 ## §2. Impact & quyết định chọn
 - Bảng impact ≥3 ứng viên (bao nhiêu người · tần suất · tốn gì mỗi lần · khả thi):
 - Ứng viên ĐÃ LOẠI + vì sao:

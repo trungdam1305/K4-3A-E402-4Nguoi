@@ -1,0 +1,10 @@
+.DS_Store
+__pycache__/
+.env
+node_modules/
+
+# Prototype: text trích từ slide và log chạy chứa nội dung data pack → không đưa lên repo public
+codebase/.cache/
+codebase/logs/
+# Nếu copy data pack vào repo để chạy, đừng commit nó
+data/

@@ -3,488 +3,174 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VLearn Grounded Tutor — Interactive Prototype (CP2)</title>
+  <title>VLearn Grounded Tutor — Prototype (Working)</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- PDF.js: hiển thị slide thật từ data pack -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     @keyframes pulseHighlight {
-      0%, 100% { background-color: rgba(254, 240, 138, 0.4); border-color: #eab308; }
-      50% { background-color: rgba(254, 240, 138, 0.85); border-color: #ca8a04; }
+      0%, 100% { background-color: rgba(254, 240, 138, 0.35); box-shadow: 0 0 0 3px #eab308; }
+      50% { background-color: rgba(254, 240, 138, 0.85); box-shadow: 0 0 0 3px #ca8a04; }
     }
-    .highlight-active {
-      animation: pulseHighlight 2s ease-in-out infinite;
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #f1f5f9;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 4px;
-    }
+    .highlight-active { animation: pulseHighlight 1.4s ease-in-out 3; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .md p { margin: 0 0 .45rem; line-height: 1.55; }
+    .md p:last-child { margin-bottom: 0; }
+    .md ul { list-style: disc; padding-left: 1.1rem; margin: 0 0 .45rem; }
+    .md ol { list-style: decimal; padding-left: 1.1rem; margin: 0 0 .45rem; }
+    .md li { margin: .15rem 0; line-height: 1.5; }
+    .md code { background: #e2e8f0; border-radius: 3px; padding: 0 3px; font-size: 11px; }
+    .md pre { background: #0f172a; color: #a7f3d0; border-radius: 6px; padding: 8px; font-size: 11px; overflow-x: auto; margin: 0 0 .45rem; }
+    .cite { display: inline-flex; align-items: center; gap: 2px; margin: 0 1px; padding: 0 5px; border-radius: 5px;
+            font-size: 10.5px; font-weight: 600; line-height: 1.5; vertical-align: 1px;
+            background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; white-space: nowrap; }
+    .cite:hover { background: #e0e7ff; }
+    .cite.reported { text-decoration: line-through; opacity: .55; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col h-screen overflow-hidden font-sans">
 
+  <!-- Server chưa chạy -->
+  <div id="offline" class="hidden fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg p-6 text-sm">
+      <h2 class="font-bold text-lg text-rose-700 flex items-center gap-2"><i class="ph-bold ph-plug"></i> Chưa kết nối được server</h2>
+      <p class="mt-2 text-slate-600">Prototype đọc data pack thật và gọi AI (OpenAI/Gemini) qua server local. Mở terminal ở gốc repo và chạy:</p>
+      <pre class="mt-3 bg-slate-900 text-emerald-300 rounded p-3 text-xs">python codebase/server.py</pre>
+      <p class="mt-3 text-slate-600">rồi mở <code class="bg-slate-100 px-1 rounded">http://127.0.0.1:8000</code>. Hướng dẫn đầy đủ: <code class="bg-slate-100 px-1 rounded">codebase/README.md</code>.</p>
+    </div>
+  </div>
+
   <!-- Top Header Navigation -->
-  <header class="bg-indigo-900 text-white px-6 py-3 flex items-center justify-between shadow-md shrink-0">
-    <div class="flex items-center space-x-4">
-      <div class="bg-amber-400 text-slate-900 font-extrabold px-3 py-1 rounded text-sm tracking-wider flex items-center gap-1.5 shadow">
+  <header class="bg-indigo-900 text-white px-5 py-2.5 flex items-center justify-between gap-4 shadow-md shrink-0">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="bg-amber-400 text-slate-900 font-extrabold px-3 py-1 rounded text-sm tracking-wider flex items-center gap-1.5 shadow shrink-0">
         <i class="ph-bold ph-graduation-cap"></i> VLearn
       </div>
-      <div>
-        <h1 class="font-bold text-base flex items-center gap-2">
-          Day 01: AI Engineering Foundations & Baseline
-          <span class="text-xs bg-indigo-800 text-indigo-200 px-2 py-0.5 rounded border border-indigo-700">Lớp 3A · Phòng E402</span>
+      <div class="min-w-0">
+        <h1 class="font-bold text-base flex items-center gap-2 truncate">
+          Grounded Tutor
+          <span class="text-xs bg-indigo-800 text-indigo-200 px-2 py-0.5 rounded border border-indigo-700 font-medium">Lớp 3A · Phòng E402</span>
         </h1>
-        <p class="text-xs text-indigo-300">Tính năng: Grounded AI Tutor (Trích dẫn số trang chính xác & Chống bịa nguồn)</p>
+        <p class="text-xs text-indigo-300 truncate">Prototype Working · slide, transcript, chatlog thật từ data pack · trả lời có mã nguồn, không có căn cứ thì nói rõ</p>
       </div>
     </div>
-
-    <!-- Quick Test Scenarios for CP2 Evaluators -->
-    <div class="flex items-center space-x-2 bg-indigo-950/60 p-1.5 rounded-lg border border-indigo-800/80">
-      <span class="text-xs text-indigo-300 font-medium px-2 flex items-center gap-1">
-        <i class="ph ph-lightning text-amber-400"></i> Kịch bản thử nhanh:
-      </span>
-      <button onclick="runScenario(1)" class="text-xs px-2.5 py-1 bg-indigo-800 hover:bg-indigo-700 rounded transition font-medium text-emerald-300 hover:text-white border border-indigo-700 flex items-center gap-1">
-        1. Chuẩn (Turn T10288)
-      </button>
-      <button onclick="runScenario(2)" class="text-xs px-2.5 py-1 bg-indigo-800 hover:bg-indigo-700 rounded transition font-medium text-amber-300 hover:text-white border border-indigo-700 flex items-center gap-1">
-        2. Mơ hồ (T10289)
-      </button>
-      <button onclick="runScenario(3)" class="text-xs px-2.5 py-1 bg-indigo-800 hover:bg-indigo-700 rounded transition font-medium text-rose-300 hover:text-white border border-indigo-700 flex items-center gap-1">
-        3. Ngoài bài (Out-of-scope)
-      </button>
-      <button onclick="runScenario(4)" class="text-xs px-2.5 py-1 bg-indigo-800 hover:bg-indigo-700 rounded transition font-medium text-purple-300 hover:text-white border border-indigo-700 flex items-center gap-1">
-        4. Sửa nguồn (HAX G9)
-      </button>
+    <div class="flex items-center gap-2 shrink-0">
+      <label class="text-xs text-indigo-300" for="lecture">Bài đang học</label>
+      <select id="lecture" class="text-xs text-slate-800 rounded px-2 py-1 border border-indigo-700 bg-white"></select>
+      <span id="ai-status" class="text-[11px] px-2 py-1 rounded border border-indigo-700 bg-indigo-950/60 text-indigo-200">Đang kết nối…</span>
     </div>
   </header>
 
-  <!-- Main Workspace Area -->
+  <!-- Kịch bản lấy từ chatlog thật -->
+  <div class="bg-indigo-950 text-white px-5 py-1.5 flex items-center gap-2 overflow-x-auto shrink-0 border-t border-indigo-800">
+    <span class="text-xs text-indigo-300 font-medium flex items-center gap-1 shrink-0">
+      <i class="ph ph-lightning text-amber-400"></i> Câu hỏi thật của K4:
+    </span>
+    <div id="scenarios" class="flex items-center gap-1.5"></div>
+    <button id="random-turn" class="shrink-0 text-xs px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded font-semibold flex items-center gap-1">
+      <i class="ph-bold ph-shuffle"></i> Lượt K4 ngẫu nhiên chưa có trích dẫn
+    </button>
+  </div>
+
   <main class="flex-1 flex overflow-hidden">
-    
-    <!-- LEFT PANEL: Slide & Document Viewer (60% width) -->
-    <section class="w-7/12 border-r border-slate-200 bg-white flex flex-col">
-      <!-- Viewer Controls -->
-      <div class="bg-slate-100 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between text-sm shrink-0">
-        <div class="flex items-center space-x-3">
-          <span class="font-semibold text-slate-700 flex items-center gap-1.5">
-            <i class="ph ph-file-pdf text-red-600 text-lg"></i> Day01-slides-hackathon.pdf
-          </span>
-          <span class="text-xs text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full font-mono">
-            Trang <span id="current-page-num" class="font-bold text-slate-800">12</span> / 28
-          </span>
+
+    <!-- LEFT PANEL: tài liệu thật -->
+    <section class="w-7/12 min-w-0 border-r border-slate-200 bg-white flex flex-col">
+      <div class="bg-slate-100 border-b border-slate-200 px-3 pt-2 flex items-end gap-1 text-xs shrink-0">
+        <button data-tab="slide" class="tab px-3 py-1.5 rounded-t-md font-semibold flex items-center gap-1"><i class="ph ph-presentation-chart text-red-600"></i> Slide</button>
+        <button data-tab="transcript" class="tab px-3 py-1.5 rounded-t-md font-semibold flex items-center gap-1"><i class="ph ph-microphone text-indigo-600"></i> Transcript</button>
+        <button data-tab="evidence" class="tab px-3 py-1.5 rounded-t-md font-semibold flex items-center gap-1"><i class="ph ph-magnifying-glass text-emerald-600"></i> Căn cứ lượt gần nhất <span id="evidence-count" class="text-slate-400"></span></button>
+      </div>
+
+      <!-- Slide -->
+      <div id="panel-slide" class="panel flex-1 flex flex-col min-h-0">
+        <div class="px-4 py-2 border-b border-slate-200 flex items-center justify-between text-sm shrink-0">
+          <div class="flex items-center gap-2">
+            <select id="deck" class="text-xs border border-slate-300 rounded px-2 py-1"></select>
+            <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-mono">
+              Trang <input id="page-input" type="number" min="1" class="w-10 text-center bg-transparent font-bold text-slate-800"> / <span id="page-count">–</span>
+            </span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button id="prev-page" class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-xs"><i class="ph ph-caret-left"></i> Trước</button>
+            <button id="next-page" class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-xs">Sau <i class="ph ph-caret-right"></i></button>
+          </div>
         </div>
-        <div class="flex items-center space-x-1.5">
-          <button onclick="changeSlide(1)" class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-xs font-medium text-slate-600">Trang 1</button>
-          <button onclick="changeSlide(12)" class="px-2 py-1 bg-indigo-50 border border-indigo-300 text-indigo-700 rounded hover:bg-indigo-100 text-xs font-semibold">Trang 12 (Lab)</button>
-          <button onclick="changeSlide(15)" class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-xs font-medium text-slate-600">Trang 15 (Prompt)</button>
-          <button onclick="changeSlide(24)" class="px-2 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-xs font-medium text-slate-600">Trang 24 (Security)</button>
+        <div id="slide-quote" class="hidden px-4 py-2 bg-amber-50 border-b border-amber-200 text-xs text-amber-900 shrink-0"></div>
+        <div id="slide-stage" class="flex-1 p-4 overflow-y-auto custom-scrollbar bg-slate-200/60 flex items-start justify-center">
+          <div id="slide-frame" class="rounded-lg shadow-xl bg-white">
+            <canvas id="slide-canvas" class="block rounded-lg"></canvas>
+          </div>
         </div>
       </div>
 
-      <!-- Slide Canvas Area -->
-      <div class="flex-1 p-6 overflow-y-auto custom-scrollbar flex items-center justify-center bg-slate-200/60">
-        <div id="slide-canvas" class="w-full max-w-2xl bg-white shadow-xl rounded-xl border border-slate-300 p-8 min-h-[460px] flex flex-col justify-between transition-all duration-300 relative">
-          
-          <!-- Slide Dynamic Content -->
-          <div id="slide-inner-content">
-            <!-- Rendered by JS based on page -->
-          </div>
-
-          <!-- Slide Footer -->
-          <div class="pt-6 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400">
-            <span>VinUni AI Thực Chiến · Khoá 04</span>
-            <span>Mã bài giảng: D01</span>
-            <span class="font-mono" id="slide-footer-page">Trang 12</span>
-          </div>
-
+      <!-- Transcript -->
+      <div id="panel-transcript" class="panel hidden flex-1 flex flex-col min-h-0">
+        <div class="px-4 py-2 border-b border-slate-200 flex items-center gap-2 shrink-0">
+          <select id="transcript-file" class="text-xs border border-slate-300 rounded px-2 py-1 flex-1 min-w-0"></select>
+          <input id="transcript-filter" type="search" placeholder="Lọc đoạn…" class="text-xs border border-slate-300 rounded px-2 py-1 w-40">
         </div>
+        <div id="transcript-list" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2 text-xs"></div>
       </div>
 
-      <!-- User Flow Status Notice -->
-      <div class="bg-amber-50 border-t border-amber-200 px-4 py-2 flex items-center justify-between text-xs text-amber-800 shrink-0">
-        <span class="flex items-center gap-1.5">
-          <i class="ph-bold ph-info text-amber-600"></i>
-          <span>Khi AI Tutor nhắc tới số trang, nhấp vào thẻ trích dẫn <strong>[Trang X]</strong> để tự động nhảy và highlight vị trí tương ứng.</span>
-        </span>
-        <span class="font-semibold text-amber-700">Prototype CP2: Luồng bấm thử nghiệm</span>
+      <!-- Căn cứ -->
+      <div id="panel-evidence" class="panel hidden flex-1 overflow-y-auto custom-scrollbar p-4 text-xs">
+        <p class="text-slate-500">Chưa có lượt hỏi nào. Sau mỗi câu trả lời, tab này liệt kê các đoạn trợ giảng đã tra, đoạn nào được dẫn, và điểm khớp.</p>
+      </div>
+
+      <div class="bg-amber-50 border-t border-amber-200 px-4 py-1.5 flex items-center gap-1.5 text-[11px] text-amber-800 shrink-0">
+        <i class="ph-bold ph-info text-amber-600"></i>
+        <span>Bấm thẻ nguồn <span class="cite">Slide D1 · tr.3</span> hoặc <span class="cite">T04-012</span> trong câu trả lời để mở đúng trang/đoạn. Thấy nguồn không khớp → bấm <strong>⚑</strong> để trợ giảng tìm lại.</span>
       </div>
     </section>
 
-    <!-- RIGHT PANEL: AI Grounded Tutor Chat Interface (40% width) -->
-    <section class="w-5/12 bg-white flex flex-col">
-      
-      <!-- Tutor Header -->
-      <div class="p-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
-        <div class="flex items-center space-x-3">
+    <!-- RIGHT PANEL: chat -->
+    <section class="w-5/12 min-w-0 bg-white flex flex-col">
+      <div class="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-800 text-white flex items-center justify-center font-bold shadow">
             <i class="ph-bold ph-robot text-lg"></i>
           </div>
           <div>
-            <div class="font-bold text-sm text-slate-800 flex items-center gap-1.5">
-              VLearn Grounded Tutor
-              <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            </div>
-            <p class="text-xs text-slate-500">Dẫn nguồn xác thực · Không bịa kiến thức</p>
+            <div class="font-bold text-sm text-slate-800">VLearn Grounded Tutor</div>
+            <p class="text-xs text-slate-500">Chỉ trả lời từ tài liệu bài đang học · mọi ý đều có mã nguồn</p>
           </div>
         </div>
-        <button onclick="resetChat()" class="text-xs text-slate-500 hover:text-slate-800 bg-white border border-slate-300 px-2.5 py-1 rounded shadow-sm hover:bg-slate-50 flex items-center gap-1">
+        <button id="reset-chat" class="text-xs text-slate-500 hover:text-slate-800 bg-white border border-slate-300 px-2.5 py-1 rounded shadow-sm hover:bg-slate-50 flex items-center gap-1">
           <i class="ph ph-arrow-counter-clockwise"></i> Làm mới chat
         </button>
       </div>
 
-      <!-- Message Chat Stream -->
-      <div id="chat-messages" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-4">
-        
-        <!-- Welcome Message (HAX G1 & G2) -->
-        <div class="flex items-start space-x-2.5">
-          <div class="w-7 h-7 rounded-full bg-indigo-700 text-white flex items-center justify-center shrink-0 text-xs font-bold">AI</div>
-          <div class="bg-slate-100 text-slate-800 text-xs rounded-2xl rounded-tl-sm p-3.5 max-w-[90%] shadow-sm border border-slate-200">
-            <p class="font-semibold mb-1 text-indigo-900">Chào bạn! Tôi là Trợ giảng VLearn (Grounded Mode).</p>
-            <p class="text-slate-600 mb-2 leading-relaxed">Tôi sẽ hỗ trợ bạn giải đáp thắc mắc dựa trên tài liệu bài giảng <strong>Day 01</strong>. Mọi câu trả lời của tôi đều có dẫn nguồn số trang cụ thể để bạn kiểm chứng.</p>
-            <div class="text-[11px] text-slate-500 border-t border-slate-200 pt-2 flex items-center gap-1">
-              <i class="ph ph-shield-check text-indigo-600"></i> Quy tắc: Nếu kiến thức không nằm trong bài 1, tôi sẽ nói rõ thay vì tự suy đoán.
-            </div>
-          </div>
+      <div id="chat-messages" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-4"></div>
+
+      <div class="px-3.5 pt-2 pb-1 bg-slate-50 border-t border-slate-200 shrink-0 space-y-1.5">
+        <div class="flex items-center gap-2">
+          <label for="section" class="text-[11px] text-slate-500 shrink-0">Đang học phần</label>
+          <select id="section" class="text-[11px] border border-slate-300 rounded px-1.5 py-0.5 flex-1 min-w-0 bg-white"></select>
         </div>
-
+        <div id="suggestions" class="flex flex-wrap gap-1.5"></div>
       </div>
 
-      <!-- Quick Prompt Suggestions (Presets) -->
-      <div class="px-4 py-2 bg-slate-50 border-t border-slate-200 flex flex-wrap gap-1.5 shrink-0">
-        <span class="text-[11px] text-slate-400 font-medium py-1">Gợi ý câu hỏi:</span>
-        <button onclick="submitPredefined('phần lab này dùng để làm gì ?')" class="text-xs bg-white hover:bg-indigo-50 hover:text-indigo-700 border border-slate-300 px-2.5 py-1 rounded-full text-slate-600 transition shadow-sm">
-          "phần lab này dùng để làm gì ?"
-        </button>
-        <button onclick="submitPredefined('tôi phải làm gì ? ở đây')" class="text-xs bg-white hover:bg-indigo-50 hover:text-indigo-700 border border-slate-300 px-2.5 py-1 rounded-full text-slate-600 transition shadow-sm">
-          "tôi phải làm gì ? ở đây"
-        </button>
-        <button onclick="submitPredefined('LangGraph Agent hoạt động thế nào?')" class="text-xs bg-white hover:bg-rose-50 hover:text-rose-700 border border-slate-300 px-2.5 py-1 rounded-full text-slate-600 transition shadow-sm">
-          "LangGraph hoạt động thế nào?"
-        </button>
-      </div>
-
-      <!-- Chat Input Form -->
-      <div class="p-3.5 bg-white border-t border-slate-200 shrink-0">
-        <form onsubmit="handleUserSubmit(event)" class="flex gap-2">
-          <input 
-            type="text" 
-            id="user-input" 
-            placeholder="Đặt câu hỏi về nội dung bài giảng..." 
-            class="flex-1 text-xs border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 focus:bg-white"
-          />
-          <button type="submit" class="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow transition">
+      <div class="p-3 bg-white border-t border-slate-200 shrink-0">
+        <form id="ask-form" class="flex gap-2">
+          <input type="text" id="user-input" autocomplete="off" maxlength="1000"
+            placeholder="Đặt câu hỏi về nội dung bài giảng..."
+            class="flex-1 text-xs border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 focus:bg-white" />
+          <button type="submit" id="send-btn" class="bg-indigo-700 hover:bg-indigo-800 disabled:bg-slate-400 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow transition">
             <span>Gửi</span> <i class="ph-bold ph-paper-plane-right"></i>
           </button>
         </form>
       </div>
-
     </section>
-
   </main>
 
-  <!-- Slide Content Database (Mock Data based on Day01) -->
-  <script>
-    const slideDatabase = {
-      1: {
-        page: 1,
-        title: "Day 01: AI Engineering Foundations",
-        subtitle: "Building Robust AI Applications with LLMs",
-        body: `
-          <div class="space-y-4 text-slate-700 text-sm">
-            <div class="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-              <h3 class="font-bold text-indigo-900 text-base mb-1">Mục tiêu ngày học 01:</h3>
-              <ul class="list-disc pl-5 space-y-1 text-xs">
-                <li>Nắm vững kiến trúc tương tác với mô hình ngôn ngữ lớn (LLMs).</li>
-                <li>Thực hành kỹ thuật Prompt Engineering cơ bản và nâng cao.</li>
-                <li>Thiết lập môi trường làm việc chuẩn và chạy kiểm thử baseline.</li>
-              </ul>
-            </div>
-            <p class="text-xs text-slate-500">Giảng viên: Ban Đào tạo AI Thực Chiến</p>
-          </div>
-        `
-      },
-      12: {
-        page: 12,
-        title: "Lab 01: Tạo môi trường & Chạy Test Baseline",
-        subtitle: "Hands-on Exercise · Setup Virtualenv & Baseline Suite",
-        body: `
-          <div class="space-y-3.5 text-slate-700 text-xs">
-            <p class="leading-relaxed">Bài lab này nhằm thiết lập nền tảng làm việc chuẩn hóa cho toàn bộ khóa học:</p>
-            
-            <div id="highlight-target-lab" class="p-3.5 rounded-lg border border-slate-300 bg-slate-50 transition-all duration-300">
-              <h4 class="font-bold text-slate-900 mb-1.5 flex items-center gap-1.5 text-sm">
-                <i class="ph-bold ph-target text-indigo-600"></i> Mục đích của bài Lab Baseline:
-              </h4>
-              <ol class="list-decimal pl-5 space-y-1 text-slate-700">
-                <li><strong>Khởi tạo môi trường ảo (virtualenv):</strong> Cô lập các thư viện Python, tránh xung đột phiên bản.</li>
-                <li><strong>Kiểm tra kết nối API Key:</strong> Xác thực kết nối tới Google Gemini API / OpenAI API.</li>
-                <li><strong>Chạy Test Baseline:</strong> Thiết lập một điểm chuẩn tham chiếu (baseline score) đo lường độ chính xác và độ trễ trước khi áp dụng kỹ thuật tối ưu.</li>
-              </ol>
-            </div>
+  <div id="toast" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-3 py-2 rounded shadow-lg z-40"></div>
 
-            <div class="bg-slate-900 text-slate-200 p-3 rounded-lg font-mono text-[11px]">
-              <span class="text-slate-500"># Lệnh khởi chạy baseline test</span><br/>
-              python test_baseline.py --model gemini-1.5-flash --eval-suite basic
-            </div>
-          </div>
-        `
-      },
-      15: {
-        page: 15,
-        title: "Cấu trúc Prompt: System vs User Prompt",
-        subtitle: "Phân định thẩm quyền và vai trò trong Prompt Engineering",
-        body: `
-          <div class="space-y-3 text-xs text-slate-700">
-            <div class="grid grid-cols-2 gap-3">
-              <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <h5 class="font-bold text-blue-900 mb-1">System Prompt</h5>
-                <p class="text-slate-600 text-[11px]">Thiết lập vai trò (Persona), quy tắc đạo đức, ranh giới thẩm quyền và định dạng đầu ra bắt buộc của AI.</p>
-              </div>
-              <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                <h5 class="font-bold text-emerald-900 mb-1">User Prompt</h5>
-                <p class="text-slate-600 text-[11px]">Nhiệm vụ hoặc câu hỏi cụ thể theo từng lượt tương tác của người học.</p>
-              </div>
-            </div>
-            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-[11px]">
-              ⚠️ <strong>Nguyên tắc bảo mật:</strong> Không bao giờ cho phép User Prompt ghi đè lên các chỉ thị an toàn trong System Prompt.
-            </div>
-          </div>
-        `
-      },
-      24: {
-        page: 24,
-        title: "Bảo mật API Key & Chi phí LLM",
-        subtitle: "Best practices for production environment",
-        body: `
-          <div class="space-y-3 text-xs text-slate-700">
-            <ul class="list-disc pl-5 space-y-1.5">
-              <li><strong>Không commit API key:</strong> Luôn dùng file <code>.env</code> và đưa vào <code>.gitignore</code>.</li>
-              <li><strong>Quản lý Token Usage:</strong> Luôn theo dõi số lượng input/output tokens để tránh vượt quota.</li>
-            </ul>
-          </div>
-        `
-      }
-    };
-
-    // Render Current Slide
-    function changeSlide(pageNum, highlightTargetId = null) {
-      const data = slideDatabase[pageNum] || slideDatabase[12];
-      document.getElementById('current-page-num').textContent = data.page;
-      document.getElementById('slide-footer-page').textContent = `Trang ${data.page}`;
-      
-      const container = document.getElementById('slide-inner-content');
-      container.innerHTML = `
-        <div class="mb-4">
-          <div class="text-[11px] font-bold text-indigo-700 uppercase tracking-wider mb-1">${data.subtitle}</div>
-          <h2 class="text-xl font-extrabold text-slate-900">${data.title}</h2>
-        </div>
-        ${data.body}
-      `;
-
-      // Apply Highlight if requested
-      if (highlightTargetId) {
-        setTimeout(() => {
-          const el = document.getElementById(highlightTargetId);
-          if (el) {
-            el.classList.add('highlight-active');
-            setTimeout(() => el.classList.remove('highlight-active'), 4000);
-          }
-        }, 100);
-      }
-    }
-
-    // Append Message to Chat
-    function appendUserMessage(text) {
-      const container = document.getElementById('chat-messages');
-      const div = document.createElement('div');
-      div.className = "flex items-start justify-end space-x-2";
-      div.innerHTML = `
-        <div class="bg-indigo-600 text-white text-xs rounded-2xl rounded-tr-sm p-3 max-w-[85%] shadow-sm">
-          ${text}
-        </div>
-        <div class="w-7 h-7 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center shrink-0 text-xs font-bold">Tôi</div>
-      `;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
-    }
-
-    function appendAIMessage(htmlContent) {
-      const container = document.getElementById('chat-messages');
-      const div = document.createElement('div');
-      div.className = "flex items-start space-x-2.5";
-      div.innerHTML = `
-        <div class="w-7 h-7 rounded-full bg-indigo-700 text-white flex items-center justify-center shrink-0 text-xs font-bold">AI</div>
-        <div class="bg-slate-100 text-slate-800 text-xs rounded-2xl rounded-tl-sm p-3.5 max-w-[90%] shadow-sm border border-slate-200">
-          ${htmlContent}
-        </div>
-      `;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
-    }
-
-    // Scenarios for Quick Evaluation
-    function runScenario(id) {
-      if (id === 1) {
-        // Scenario 1: Grounded answer with citation (Happy Path - T10288)
-        appendUserMessage("phần lab này dùng để làm gì ?");
-        setTimeout(() => {
-          appendAIMessage(`
-            <p class="font-semibold text-slate-900 mb-1.5">Mục đích của bài Lab Baseline:</p>
-            <p class="text-slate-700 leading-relaxed mb-2.5">Bài lab này nhằm xác lập chuẩn kỹ thuật ban đầu cho môi trường thực hành của bạn qua 3 việc chính:</p>
-            <ul class="list-disc pl-4 space-y-1 text-slate-700 mb-3">
-              <li>Khởi tạo virtual environment cô lập thư viện Python.</li>
-              <li>Xác thực kết nối API Key tới mô hình LLM.</li>
-              <li>Chạy file test baseline để ghi nhận điểm tham chiếu trước khi tinh chỉnh.</li>
-            </ul>
-            <div class="flex items-center justify-between pt-2 border-t border-slate-200">
-              <button onclick="changeSlide(12, 'highlight-target-lab')" class="inline-flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold px-2.5 py-1 rounded-md text-[11px] transition shadow-sm">
-                <i class="ph-bold ph-arrow-square-out"></i> Trích dẫn: [Trang 12 · Baseline Testing]
-              </button>
-              <div class="flex items-center space-x-1.5 text-slate-400">
-                <button title="Hữu ích" class="hover:text-emerald-600"><i class="ph ph-thumbs-up"></i></button>
-                <button title="Chưa đúng" class="hover:text-rose-600"><i class="ph ph-thumbs-down"></i></button>
-                <button onclick="reportCitation()" title="Báo nguồn sai" class="hover:text-amber-600 text-[11px] flex items-center gap-0.5"><i class="ph ph-warning"></i> Báo sai</button>
-              </div>
-            </div>
-          `);
-        }, 300);
-      } else if (id === 2) {
-        // Scenario 2: Clarification when ambiguous (Low-confidence - T10289 - HAX G10)
-        appendUserMessage("tôi phải làm gì ? ở đây");
-        setTimeout(() => {
-          appendAIMessage(`
-            <p class="text-slate-800 leading-relaxed mb-2">Câu hỏi của bạn hơi ngắn. Để hỗ trợ chính xác nhất, bạn đang muốn thực hiện bước nào dưới đây?</p>
-            <div class="space-y-1.5 my-2">
-              <button onclick="selectClarify(1)" class="w-full text-left bg-white hover:bg-indigo-50 border border-slate-300 hover:border-indigo-300 p-2 rounded-lg text-xs font-medium text-slate-700 transition flex items-center justify-between">
-                <span>1. Cài đặt virtual environment và thư viện</span>
-                <i class="ph ph-caret-right text-slate-400"></i>
-              </button>
-              <button onclick="selectClarify(2)" class="w-full text-left bg-white hover:bg-indigo-50 border border-slate-300 hover:border-indigo-300 p-2 rounded-lg text-xs font-medium text-slate-700 transition flex items-center justify-between">
-                <span>2. Chạy lệnh python test_baseline.py để lấy kết quả</span>
-                <i class="ph ph-caret-right text-slate-400"></i>
-              </button>
-            </div>
-            <p class="text-[11px] text-slate-400 italic">Chọn một tùy chọn để nhận hướng dẫn từng bước.</p>
-          `);
-        }, 300);
-      } else if (id === 3) {
-        // Scenario 3: Out of scope refusal (Factuality / Honesty)
-        appendUserMessage("LangGraph Agent hoạt động thế nào?");
-        setTimeout(() => {
-          appendAIMessage(`
-            <div class="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 mb-2">
-              <div class="font-bold flex items-center gap-1.5 text-xs mb-1">
-                <i class="ph-bold ph-shield-warning text-amber-600"></i> Không tìm thấy trong tài liệu Day 01
-              </div>
-              <p class="text-[11px] leading-relaxed">
-                Chủ đề <strong>"LangGraph Agent"</strong> không nằm trong phạm vi bài giảng Day 01. Nội dung này sẽ được giảng dạy tại <strong>Day 23 (Track 3)</strong>.
-              </p>
-            </div>
-            <p class="text-slate-600 text-xs mb-2">Để tiếp tục buổi học hôm nay, bạn có muốn tìm hiểu về:</p>
-            <div class="flex flex-wrap gap-1.5">
-              <button onclick="submitPredefined('Cấu trúc System Prompt là gì?')" class="text-[11px] bg-white border border-slate-300 px-2 py-1 rounded hover:bg-indigo-50 text-indigo-700">Cấu trúc System Prompt [Trang 15]</button>
-              <button onclick="submitPredefined('Cách bảo mật API Key')" class="text-[11px] bg-white border border-slate-300 px-2 py-1 rounded hover:bg-indigo-50 text-indigo-700">Bảo mật API Key [Trang 24]</button>
-            </div>
-          `);
-        }, 300);
-      } else if (id === 4) {
-        // Scenario 4: User correction flow (HAX G9)
-        reportCitation();
-      }
-    }
-
-    function selectClarify(option) {
-      if (option === 1) {
-        appendUserMessage("Tôi muốn cài đặt virtual environment");
-        setTimeout(() => {
-          appendAIMessage(`
-            <p class="font-semibold text-slate-900 mb-1">Các bước thiết lập môi trường ảo:</p>
-            <ol class="list-decimal pl-4 space-y-1 text-slate-700 mb-3">
-              <li>Chạy <code>python -m venv .venv</code></li>
-              <li>Kích hoạt: <code>source .venv/bin/activate</code></li>
-              <li>Cài thư viện: <code>pip install -r requirements.txt</code></li>
-            </ol>
-            <button onclick="changeSlide(12, 'highlight-target-lab')" class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold px-2.5 py-1 rounded-md text-[11px]">
-              <i class="ph-bold ph-arrow-square-out"></i> Xem tại: [Trang 12 · Cài đặt môi trường]
-            </button>
-          `);
-        }, 300);
-      } else {
-        appendUserMessage("Tôi muốn chạy lệnh test_baseline.py");
-        setTimeout(() => {
-          appendAIMessage(`
-            <p class="font-semibold text-slate-900 mb-1">Chạy lệnh kiểm thử baseline:</p>
-            <p class="text-slate-700 mb-2">Mở terminal tại thư mục bài lab và gõ lệnh:</p>
-            <pre class="bg-slate-900 text-emerald-400 p-2 rounded text-[11px] font-mono mb-2">python test_baseline.py --eval basic</pre>
-            <button onclick="changeSlide(12, 'highlight-target-lab')" class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold px-2.5 py-1 rounded-md text-[11px]">
-              <i class="ph-bold ph-arrow-square-out"></i> Xem tại: [Trang 12 · Baseline Command]
-            </button>
-          `);
-        }, 300);
-      }
-    }
-
-    function reportCitation() {
-      appendAIMessage(`
-        <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-900 text-xs">
-          <div class="font-bold flex items-center gap-1.5 mb-1">
-            <i class="ph-bold ph-bug text-rose-600"></i> Phản hồi: Nguồn trích dẫn chưa khớp
-          </div>
-          <p class="text-[11px] text-slate-600 mb-2">Cảm ơn bạn đã phản hồi. Trợ giảng đang quét lại transcript bài giảng để tìm đoạn tài liệu chính xác hơn...</p>
-          <div class="text-[11px] text-slate-700 bg-white p-2 rounded border border-rose-100">
-            <strong>Đoạn đề xuất thay thế:</strong> Transcript D01 đoạn [D01_042] nói về <em>"Baseline score đo lường độ chính xác ban đầu"</em>.
-          </div>
-        </div>
-      `);
-    }
-
-    function submitPredefined(text) {
-      document.getElementById('user-input').value = text;
-      handleUserSubmit(new Event('submit'));
-    }
-
-    function handleUserSubmit(e) {
-      e.preventDefault();
-      const input = document.getElementById('user-input');
-      const val = input.value.trim();
-      if (!val) return;
-      
-      input.value = '';
-      if (val.toLowerCase().includes("langgraph")) {
-        runScenario(3);
-      } else if (val.toLowerCase().includes("phải làm gì")) {
-        runScenario(2);
-      } else {
-        runScenario(1);
-      }
-    }
-
-    function resetChat() {
-      const container = document.getElementById('chat-messages');
-      container.innerHTML = `
-        <div class="flex items-start space-x-2.5">
-          <div class="w-7 h-7 rounded-full bg-indigo-700 text-white flex items-center justify-center shrink-0 text-xs font-bold">AI</div>
-          <div class="bg-slate-100 text-slate-800 text-xs rounded-2xl rounded-tl-sm p-3.5 max-w-[90%] shadow-sm border border-slate-200">
-            <p class="font-semibold mb-1 text-indigo-900">Chào bạn! Tôi là Trợ giảng VLearn (Grounded Mode).</p>
-            <p class="text-slate-600 mb-2 leading-relaxed">Tôi sẽ hỗ trợ bạn giải đáp thắc mắc dựa trên tài liệu bài giảng <strong>Day 01</strong>. Mọi câu trả lời của tôi đều có dẫn nguồn số trang cụ thể để bạn kiểm chứng.</p>
-            <div class="text-[11px] text-slate-500 border-t border-slate-200 pt-2 flex items-center gap-1">
-              <i class="ph ph-shield-check text-indigo-600"></i> Quy tắc: Nếu kiến thức không nằm trong bài 1, tôi sẽ nói rõ thay vì tự suy đoán.
-            </div>
-          </div>
-        </div>
-      `;
-      changeSlide(12);
-    }
-
-    // Initial Load
-    window.onload = () => changeSlide(12);
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>

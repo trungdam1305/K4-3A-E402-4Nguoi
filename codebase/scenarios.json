@@ -1,0 +1,11 @@
+[
+  {"turn_id": "T10472", "lecture": "day1", "path": "happy", "label": "Temperature thấp → ổn định?"},
+  {"turn_id": "T10400", "lecture": "day1", "path": "happy", "label": "llm là gì"},
+  {"turn_id": "T11533", "lecture": "day2", "path": "happy", "label": "Rule không kém Agent là sao"},
+  {"turn_id": "T10364", "lecture": "day1", "path": "low-confidence", "label": "context ?"},
+  {"turn_id": "T10465", "lecture": "day1", "path": "low-confidence", "label": "chi tiết hơn"},
+  {"turn_id": "T10288", "lecture": "day1", "path": "failure", "label": "phần lab này dùng để làm gì (lab không có trong tài liệu)"},
+  {"turn_id": "T10855", "lecture": "day1", "path": "failure", "label": "import OpenAI trong hàm (code lab)"},
+  {"turn_id": "T11020", "lecture": "day1", "path": "failure", "label": "Prompt injection thật"},
+  {"turn_id": "T11695", "lecture": "day2", "path": "correction", "label": "Problem Statement → báo nguồn sai", "then": "report_first_citation"}
+]

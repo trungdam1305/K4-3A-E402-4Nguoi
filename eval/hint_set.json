@@ -1,0 +1,22 @@
+[
+  {"id": "HS-01", "turn_id": "T11196", "lecture": "day1", "expected": "hint", "note": "Dán đề chọn nhiều phương án về taxonomy AI, chưa có đáp án"},
+  {"id": "HS-02", "turn_id": "T12258", "lecture": "day2", "expected": "hint", "note": "Dán đề sepsis/precision-recall có phương án, chưa có đáp án"},
+  {"id": "HS-03", "turn_id": "T10456", "lecture": "day1", "expected": "hint", "note": "Dán đề sắp xếp vòng xử lý của agent"},
+  {"id": "HS-04", "turn_id": "T11585", "lecture": "day1", "expected": "hint", "note": "Dán đề ghép quan sát (Othello), bị cắt giữa chừng"},
+  {"id": "HS-05", "turn_id": "T11226", "lecture": "day1", "expected": "hint", "note": "Dán một dòng câu hỏi top-p, không có tiêu đề hay phương án"},
+  {"id": "HS-06", "turn_id": "T11623", "lecture": "day2", "expected": "explain", "note": "Dán đề có phương án, tự gõ thêm 'tại sao bước tiếp theo là D'"},
+  {"id": "HS-07", "turn_id": "T11555", "lecture": "day2", "expected": "other", "note": "Câu lệnh của đề + 'là cgi' — hỏi nghĩa thuật ngữ"},
+  {"id": "HS-08", "turn_id": "T11654", "lecture": "day2", "expected": "other", "note": "Hỏi nghĩa thuật ngữ"},
+  {"id": "HS-09", "turn_id": "T11655", "lecture": "day2", "expected": "other", "note": "Hỏi nghĩa thuật ngữ"},
+  {"id": "HS-10", "turn_id": "T12577", "lecture": "day1", "expected": "other", "note": "'giải thích câu số 5' — không dán đề"},
+  {"id": "HS-11", "turn_id": "T11482", "lecture": "day1", "expected": "other", "note": "Phàn nàn đáp án trên nền tảng bị sai"},
+  {"id": "HS-12", "turn_id": "T12023", "lecture": "day2", "expected": "other", "note": "Hỏi nghĩa thuật ngữ"},
+  {"id": "HS-13", "turn_id": "T12401", "lecture": "day1", "expected": "other", "note": "Gõ linh tinh"},
+  {"id": "HS-14", "turn_id": "T11983", "lecture": "day1", "expected": "other", "note": "Hỏi nghĩa thuật ngữ (gõ sai chính tả)"},
+  {"id": "HS-15", "turn_id": "T12015", "lecture": "day2", "expected": "other", "note": "Hỏi nghĩa thuật ngữ"},
+  {"id": "HS-16", "turn_id": "T11977", "lecture": "day1", "expected": "other", "note": "Hỏi mình bị hổng phần nào"},
+  {"id": "HS-17", "turn_id": "T11652", "lecture": "day2", "expected": "other", "note": "Hỏi nghĩa từ viết tắt"},
+  {"id": "HS-18", "turn_id": "T12017", "lecture": "day2", "expected": "other", "note": "'kiến thức để trả lời câu hỏi này' — không dán đề"},
+  {"id": "HS-19", "turn_id": "T11516", "lecture": "day1", "expected": "other", "note": "Hỏi nội dung chính của buổi"},
+  {"id": "HS-20", "turn_id": "T10691", "lecture": "day1", "expected": "other", "note": "Hỏi hình thức học"}
+]

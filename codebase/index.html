@@ -621,15 +621,20 @@
         <label for="section" class="text-xs font-mono text-zinc-500 shrink-0 uppercase font-semibold">Phần học:</label>
         <select id="section" class="text-sm bg-white text-zinc-800 border border-zinc-200 rounded-md px-2.5 py-1 flex-1 min-w-0 focus:outline-none focus:border-zinc-400 font-medium"></select>
       </div>
+      <label for="quiz-hints" class="flex items-center gap-2 text-xs text-zinc-600 cursor-pointer select-none" title="Khi dán đề quiz trong mục Quiz/Ôn tập: gợi ý từng bậc thay vì giải thích ngay">
+        <input type="checkbox" id="quiz-hints" class="accent-violet-600 cursor-pointer" checked>
+        <i class="ph ph-lightbulb text-violet-600"></i>
+        <span>Gợi mở đề quiz: gợi ý từng bậc, bấm “Xem giải thích” khi cần</span>
+      </label>
       <div id="suggestions" class="flex flex-wrap gap-2"></div>
     </div>
 
     <!-- Ask Input Form (Taxonomy Input Style) -->
     <div class="p-3.5 bg-white border-t border-zinc-200 shrink-0">
-      <form id="ask-form" class="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2 focus-within:border-zinc-400 focus-within:bg-white transition">
-        <input type="text" id="user-input" autocomplete="off" maxlength="1000"
-          placeholder="Đặt câu hỏi về nội dung bài giảng..."
-          class="flex-1 text-sm bg-transparent text-zinc-900 placeholder-zinc-400 focus:outline-none" />
+      <form id="ask-form" class="flex items-end gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2 focus-within:border-zinc-400 focus-within:bg-white transition">
+        <textarea id="user-input" autocomplete="off" maxlength="2000" rows="1"
+          placeholder="Đặt câu hỏi hoặc dán đề quiz… (Shift+Enter để xuống dòng)"
+          class="flex-1 text-sm bg-transparent text-zinc-900 placeholder-zinc-400 focus:outline-none resize-none max-h-32 py-1.5 leading-snug"></textarea>
         <button type="submit" id="send-btn" class="w-9 h-9 rounded-lg bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-white flex items-center justify-center text-base transition shrink-0 cursor-pointer shadow-sm" title="Gửi câu hỏi">
           <i class="ph-bold ph-arrow-up"></i>
         </button>

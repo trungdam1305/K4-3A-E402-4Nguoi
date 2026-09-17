@@ -21,7 +21,10 @@ const state = {
   goldenResults: {},
   currentGoldenCase: null,
   verifiedQuotes: {},
+  quizHints: true,         // gợi mở đề quiz trong mục Quiz/Ôn tập (lưu theo trình duyệt)
 };
+
+try { state.quizHints = localStorage.getItem('quizHints') !== 'off'; } catch (e) { /* không có storage: dùng mặc định */ }
 
 // ------------------------------------------------------------------ visual pinning state
 const pinState = {
@@ -806,6 +809,7 @@ function welcome() {
     <div class="text-[11px] text-zinc-500 border-t border-zinc-200 pt-2 space-y-1">
       <div class="flex items-center gap-2"><i class="ph-bold ph-shield-check text-emerald-600"></i> Không có trong bài → Nói rõ và chỉ chỗ nên tìm.</div>
       <div class="flex items-center gap-2"><i class="ph-bold ph-question text-amber-600"></i> Câu hỏi mơ hồ → Hỏi lại kèm gợi ý.</div>
+      <div class="flex items-center gap-2"><i class="ph-bold ph-lightbulb text-violet-600"></i> Dán đề quiz → Gợi ý từng bậc để bạn tự làm.</div>
       <div class="flex items-center gap-2"><i class="ph-bold ph-flag text-rose-600"></i> Nguồn không khớp → Bấm ⚑ để tìm lại.</div>
     </div>`);
 }
@@ -855,7 +859,48 @@ const STATUS = {
   ungrounded: ['bg-orange-50 text-orange-700 border-orange-200', 'ph-warning', () => 'Không đủ căn cứ'],
   search_only: ['bg-zinc-100 text-zinc-700 border-zinc-200', 'ph-magnifying-glass', () => 'Chỉ tìm kiếm từ khoá'],
   blocked: ['bg-rose-50 text-rose-700 border-rose-200', 'ph-shield', () => 'Chặn prompt lạ — không gửi tới AI'],
+  hint: ['bg-violet-50 text-violet-700 border-violet-200', 'ph-lightbulb', (r) => `Gợi ý bậc ${r.quiz?.level || 1}/${r.quiz?.max_level || 2} · chưa đưa đáp án`],
 };
+
+// Khối gợi ý theo bậc: câu hỏi gợi mở, ô tự trả lời, "Gợi ý tiếp" và "Xem giải thích".
+function renderHint(run) {
+  const q = run.quiz;
+  const id = run.run_id;
+  const btn = 'text-[11px] font-medium px-2.5 py-1 rounded-md border transition cursor-pointer';
+  return `
+    ${q.concept ? `<p class="mb-1.5 text-[11px] text-violet-800"><i class="ph ph-target"></i> Ý cần nắm: <strong>${escapeHtml(q.concept)}</strong></p>` : ''}
+    ${renderMd(q.text)}
+    ${q.level === 2 && !run.verified_quotes?.length ? '<p class="mt-1.5 text-[11px] text-zinc-500"><i class="ph ph-info"></i> Chưa tìm được câu trích khớp nguyên văn — hãy đọc đoạn được dẫn.</p>' : ''}
+    <div class="mt-2.5 p-2.5 rounded-lg bg-violet-50 border border-violet-200">
+      ${q.guiding_question ? `<p class="text-violet-950 mb-2 flex gap-1.5"><i class="ph-bold ph-chats-circle text-violet-600 mt-0.5 shrink-0"></i><span>${escapeHtml(q.guiding_question)}</span></p>` : ''}
+      <div class="flex gap-1.5">
+        <input type="text" data-attempt-input="${id}" maxlength="500" placeholder="Câu trả lời của bạn, vd. mình chọn A và C vì…"
+          class="flex-1 min-w-0 text-xs bg-white border border-violet-200 rounded-md px-2 py-1 focus:outline-none focus:border-violet-400">
+        <button type="button" data-quiz="attempt" data-run="${id}" class="${btn} bg-violet-600 hover:bg-violet-700 text-white border-violet-600">Nhờ nhận xét</button>
+      </div>
+      <div class="mt-2 flex flex-wrap gap-1.5">
+        ${q.level < q.max_level ? `<button type="button" data-quiz="next" data-run="${id}" class="${btn} bg-white hover:bg-violet-100 text-violet-800 border-violet-200"><i class="ph ph-lightbulb"></i> Gợi ý tiếp (bậc ${q.level + 1})</button>` : ''}
+        <button type="button" data-quiz="explain" data-run="${id}" class="${btn} bg-white hover:bg-zinc-100 text-zinc-700 border-zinc-200"><i class="ph ph-book-open"></i> Xem giải thích</button>
+      </div>
+    </div>`;
+}
+
+function quizAction(kind, runId, btn) {
+  const entry = state.runs[runId];
+  if (!entry) return;
+  const level = entry.run.quiz?.level || 1;
+  const base = { section: entry.section };
+  if (kind === 'next') {
+    ask(entry.raw, { ...base, display: `Cho mình gợi ý tiếp (bậc ${level + 1})`, hintLevel: level + 1 });
+  } else if (kind === 'explain') {
+    ask(entry.raw, { ...base, display: 'Cho mình xem giải thích', hintLevel: 3 });
+  } else if (kind === 'attempt') {
+    const input = btn.closest('.bubble')?.querySelector(`[data-attempt-input="${runId}"]`);
+    const val = input?.value.trim();
+    if (!val) { toast('Nhập câu trả lời của bạn trước đã'); input?.focus(); return; }
+    ask(entry.raw, { ...base, display: `Câu trả lời của mình: ${val}`, hintLevel: 3, attempt: val });
+  }
+}
 
 // Câu bị luật injection chặn vẫn có status not_found (để chấm eval), nhưng hiển thị là "bị chặn".
 function statusOf(r) {
@@ -882,7 +927,14 @@ function renderRun(bubble, run) {
   let body = run.status === 'ungrounded'
     ? `<p class="text-amber-700 mb-1 font-medium">Trợ giảng viết được câu trả lời nhưng không gắn được vào đoạn tài liệu nào, nên đã ẩn để tránh đoán sai.</p>
        <details class="bg-zinc-100 rounded-lg p-2 border border-zinc-200"><summary class="cursor-pointer text-[11px] text-zinc-600 hover:text-zinc-900">Xem bản nháp chưa có căn cứ</summary><div class="mt-1.5 opacity-70">${renderMd(run.answer)}</div></details>`
-    : renderMd(run.answer);
+    : run.status === 'hint' && run.quiz ? renderHint(run) : renderMd(run.answer);
+
+  if (run.quiz?.mode === 'explain') {
+    body = `<p class="mb-1.5 text-[11px] text-violet-700 flex items-center gap-1.5"><i class="ph ph-info"></i> Giải thích dựa trên slide/transcript — không phải đáp án chính thức của VLearn.</p>${body}`;
+  }
+  if (run.flags.includes('hint_leak_blocked')) {
+    body += '<p class="mt-2 text-[11px] text-amber-700"><i class="ph ph-eraser"></i> Đã gỡ một gợi ý lộ đáp án — chỉ giữ chỗ cần đọc lại.</p>';
+  }
 
   if (run.clarify_options?.length) {
     body += `<div class="mt-2.5 space-y-1.5">${run.clarify_options.map((o) => `
@@ -939,7 +991,7 @@ function renderRun(bubble, run) {
   updateComparison(run, state.currentTurn);
 }
 
-async function ask(raw, { display, turn = null, exclude = [], section = null, then = null } = {}) {
+async function ask(raw, { display, turn = null, exclude = [], section = null, then = null, hintLevel = null, attempt = '' } = {}) {
   if (state.busy) { toast('Đang chờ câu trả lời trước…'); return; }
   state.busy = true;
   $('#send-btn').disabled = true;
@@ -950,7 +1002,9 @@ async function ask(raw, { display, turn = null, exclude = [], section = null, th
   const started = Date.now();
   const timer = setInterval(() => { const e = bubble.querySelector('.elapsed'); if (e) e.textContent = Math.round((Date.now() - started) / 1000); }, 500);
   try {
-    const run = await api('/api/ask', { question: raw, lecture: state.lecture, section: sec, history: state.history.slice(-4), exclude });
+    // hint_level: null = để server tự chọn (đề quiz → gợi ý bậc 1), 0 = học viên tắt gợi mở.
+    const hint_level = hintLevel ?? (state.quizHints ? null : 0);
+    const run = await api('/api/ask', { question: raw, lecture: state.lecture, section: sec, history: state.history.slice(-4), exclude, hint_level, attempt });
     Object.assign(state.sources, run.sources);
     if (run.verified_quotes && Array.isArray(run.verified_quotes)) {
       run.verified_quotes.forEach((vq) => {
@@ -1039,8 +1093,9 @@ async function loadScenarios() {
     'low-confidence': 'text-amber-700 border-amber-200 bg-amber-50 hover:bg-amber-100',
     failure: 'text-rose-700 border-rose-200 bg-rose-50 hover:bg-rose-100',
     correction: 'text-purple-700 border-purple-200 bg-purple-50 hover:bg-purple-100',
+    quiz: 'text-violet-700 border-violet-200 bg-violet-50 hover:bg-violet-100',
   };
-  const pathName = { happy: 'chuẩn', 'low-confidence': 'mơ hồ', failure: 'khó', correction: 'sửa nguồn' };
+  const pathName = { happy: 'chuẩn', 'low-confidence': 'mơ hồ', failure: 'khó', correction: 'sửa nguồn', quiz: 'gợi mở' };
   $('#scenarios').innerHTML = scenarios.map((s, i) => `
     <button type="button" data-scenario="${i}" title="${escapeHtml(s.turn.question)}"
       class="shrink-0 text-xs px-2.5 py-1 rounded-md border transition-all ${color[s.path] || 'text-zinc-700 border-zinc-200 bg-white'} hover:scale-105 whitespace-nowrap flex items-center gap-1.5 font-medium shadow-sm">
@@ -1213,6 +1268,7 @@ document.addEventListener('click', (ev) => {
   if (!t) return;
   if (t.dataset.cite) openSource(t.dataset.cite, state.verifiedQuotes?.[t.dataset.cite] || '');
   else if (t.dataset.report) reportSource(t.dataset.run, t.dataset.report);
+  else if (t.dataset.quiz) quizAction(t.dataset.quiz, t.dataset.run, t);
   else if (t.dataset.ask) {
     const origin = state.runs[t.dataset.run];
     openChat();
@@ -1258,12 +1314,44 @@ window.addEventListener('keydown', (ev) => {
   }
 });
 
+function fitInput() {
+  const el = $('#user-input');
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
+}
+
 $('#ask-form').addEventListener('submit', (ev) => {
   ev.preventDefault();
   const val = $('#user-input').value.trim();
   if (!val) return;
   $('#user-input').value = '';
+  fitInput();
   ask(val);
+});
+
+// Ô nhập nhiều dòng để dán nguyên đề quiz: Enter gửi, Shift+Enter xuống dòng.
+$('#user-input').addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing) {
+    ev.preventDefault();
+    $('#ask-form').requestSubmit();
+  }
+});
+$('#user-input').addEventListener('input', fitInput);
+
+// Enter trong ô "Câu trả lời của bạn" của khối gợi ý.
+$('#chat-messages').addEventListener('keydown', (ev) => {
+  const input = ev.target.closest?.('[data-attempt-input]');
+  if (input && ev.key === 'Enter' && !ev.isComposing) {
+    ev.preventDefault();
+    quizAction('attempt', input.dataset.attemptInput, input);
+  }
+});
+
+$('#quiz-hints').checked = state.quizHints;
+$('#quiz-hints').addEventListener('change', (ev) => {
+  state.quizHints = ev.target.checked;
+  try { localStorage.setItem('quizHints', state.quizHints ? 'on' : 'off'); } catch (e) { /* bỏ qua */ }
+  toast(state.quizHints ? 'Đã bật gợi mở đề quiz' : 'Đã tắt gợi mở — đề quiz sẽ được giải thích ngay');
 });
 
 $('#random-turn').addEventListener('click', async () => {

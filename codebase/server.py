@@ -142,9 +142,13 @@ class Handler(BaseHTTPRequestHandler):
             if not question:
                 return self._error(HTTPStatus.BAD_REQUEST, "Thiếu câu hỏi")
             lecture = body.get("lecture") if body.get("lecture") in (*LECTURES, "all") else "day1"
+            hint_level = body.get("hint_level")
+            if isinstance(hint_level, bool) or hint_level not in (0, 1, 2, 3):
+                hint_level = None
             result = tutor.answer(
                 question[:4000], lecture=lecture, section=str(body.get("section", ""))[:200],
                 history=body.get("history") or [], exclude=[str(x) for x in body.get("exclude") or []][:20],
+                hint_level=hint_level, attempt=str(body.get("attempt") or "")[:500],
             )
             return self._json(result)
 

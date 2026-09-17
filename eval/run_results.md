@@ -5,32 +5,34 @@ Bảng dưới do `eval/run_eval.py` tự ghi sau mỗi lượt chạy (không s
 ## Lượt chạy gần nhất
 
 <!-- AUTO:START -->
-_Tự sinh bởi `eval/run_eval.py` — lượt **Run 2 (CP4) - Catalog Policy & Smart Retrieval**, 2026-09-17T19:51:10, commit `6fa9c38-dirty`, golden set sha1 `37fc97cb59`._
+_Tự sinh bởi `eval/run_eval.py` — lượt **Run 2 (CP4) · lượt 3/3**, 2026-09-17T23:02:23, commit `49dacdd`, golden set sha1 `0b45375eac`._
 
 | Thước đo | Kết quả |
 |---|---|
 | Số ca | 20 |
-| Đạt | **20/20 (100.0%)** |
+| Đạt | **19/20 (95.0%)** |
 | Model trả lời | gpt-4.1-mini-2025-04-14 |
-| Độ trễ trung vị / lượt | 2631 ms |
-| Tỷ lệ câu trích nguyên văn hợp lệ | **97.5%** (kiểm bằng code) |
+| Độ trễ trung vị / lượt | 2660 ms |
+| Ca do AI quyết định | 13/14 đạt |
+| Ca do luật quyết định (không gọi AI) | 6/6 đạt |
+| Nguồn được dẫn có câu trích khớp nguyên văn (kiểm bằng code) | 96.7% (trung bình trên 10 ca có dẫn nguồn) |
 | Mã nguồn bịa bị bộ kiểm gỡ | 0 |
 | Lỗi gọi AI | 0 |
 
 | Lớp chỗ khó | Đạt |
 |---|---|
 | ① Nguồn sự thật | 11/11 (100.0%) |
-| ② Mơ hồ / Thiếu thông tin | 3/3 (100.0%) |
+| ② Mơ hồ / Thiếu thông tin | 2/3 (66.7%) |
 | ③ Ngoài phạm vi / Thẩm quyền | 3/3 (100.0%) |
 | ④ Đặc thù nghiệp vụ | 3/3 (100.0%) |
 
 | Ca | Turn | Kỳ vọng | Thực tế | Nguồn dẫn | Kết quả |
 |---|---|---|---|---|---|
-| GS-01 | `T10472` | answer | answer | `D1-p29` | ✅ Đạt |
-| GS-02 | `T11695` | answer | answer | `D2-p29`, `D2-p27`, `T01-017` | ✅ Đạt |
+| GS-01 | `T10472` | answer | answer | `D1-p29`, `T04-072` | ✅ Đạt |
+| GS-02 | `T11695` | answer | answer | `D2-p2`, `D2-p27`, `D2-p29` | ✅ Đạt |
 | GS-03 | `T10400` | answer | answer | `D1-p3` | ✅ Đạt |
 | GS-04 | `T10364` | clarify | clarify | — | ✅ Đạt |
-| GS-05 | `T10465` | clarify | clarify | — | ✅ Đạt |
+| GS-05 | `T10465` | clarify | not_found | — | ❌ Trạng thái mong đợi clarify nhưng nhận not_found |
 | GS-06 | `T11543` | clarify | clarify | — | ✅ Đạt |
 | GS-07 | `T10855` | not_found | not_found | — | ✅ Đạt |
 | GS-08 | `T10388` | not_found | not_found | — | ✅ Đạt |
@@ -38,13 +40,13 @@ _Tự sinh bởi `eval/run_eval.py` — lượt **Run 2 (CP4) - Catalog Policy &
 | GS-10 | `T11020` | not_found | not_found | — | ✅ Đạt |
 | GS-11 | `T10288` | not_found | not_found | — | ✅ Đạt |
 | GS-12 | `T10289` | not_found | not_found | — | ✅ Đạt |
-| GS-13 | `T10438` | answer | answer | `D1-p3`, `T06-040`, `T06-042`, `T06-028` | ✅ Đạt |
-| GS-14 | `T11533` | answer | answer | `D2-p18`, `T02-038` | ✅ Đạt |
-| GS-15 | `SYNTH-01` | answer | answer | `D2-p3`, `T01-049` | ✅ Đạt |
-| GS-16 | `SYNTH-02` | answer | answer | `D2-p15`, `D2-p28` | ✅ Đạt |
-| GS-17 | `SYNTH-03` | answer | answer | `D1-p15`, `D1-p8`, `T04-094` | ✅ Đạt |
+| GS-13 | `T10438` | answer | answer | `T06-028`, `T06-040`, `T06-042`, `D1-p3` | ✅ Đạt |
+| GS-14 | `T11533` | answer | answer | `D2-p18` | ✅ Đạt |
+| GS-15 | `SYNTH-01` | answer | answer | `T01-049` | ✅ Đạt |
+| GS-16 | `SYNTH-02` | answer | answer | `T03-091`, `T01-033`, `T03-031` | ✅ Đạt |
+| GS-17 | `SYNTH-03` | answer | answer | `T04-094` | ✅ Đạt |
 | GS-18 | `T11644` | not_found | not_found | — | ✅ Đạt |
-| GS-19 | `SYNTH-04` | answer | answer | `D1-p4`, `D1-p3`, `T06-051` | ✅ Đạt |
+| GS-19 | `SYNTH-04` | answer | answer | `D1-p3`, `D1-p4`, `T04-003` | ✅ Đạt |
 | GS-20 | `SYNTH-05` | answer | answer | `D1-p29` | ✅ Đạt |
 <!-- AUTO:END -->
 
@@ -82,23 +84,75 @@ Trước khi commit, nhóm chạy một lượt kiểm tra với cùng agent và
 
 ---
 
-## Phân tích kết quả Run 2 (CP4) — Khắc phục triệt để, đạt 20/20 (100.0%)
+## Phân tích Run 2 (CP4)
 
-Lượt chạy tự động ngày 17/09 19:51 (`eval/runs/20260917-195110.json`, commit `6fa9c38-dirty`) đạt **20/20 ca (100.0%)**. Cả 3 ca hỏng ở Run 1 đã được giải quyết dứt điểm:
+Mục này viết tay, dựa trên 3 lượt liên tiếp trên commit `49dacdd`, cùng golden set (sha1 `0b45375eac`), model `gpt-4.1-mini-2025-04-14`.
 
-1. **Khắc phục GS-11 (`T10288` · "phần lab này dùng để làm gì ?"):**
-   - *Giải pháp:* Tích hợp bảng ánh xạ `codebase/tutor/catalog.py` chứa danh mục các bài thực hành / môi trường ngoài data pack (`OUT_OF_PACK_LAB_SECTIONS`).
-   - *Kết quả:* Xác định ngay phần "Tạo môi trường và chạy test baseline" không có trong tài liệu bài giảng, trả thẳng `status="not_found"` bằng logic code (0 token, 0 ms gọi AI), triệt tiêu hoàn toàn hiện tượng model tự mượn transcript của lab self-attention.
+| Lượt | File | Đạt | Ca hỏng | Trung vị / lượt | Mã bịa bị gỡ | Nguồn có câu trích khớp nguyên văn |
+|---|---|:---:|---|---|:---:|---|
+| 1/3 | `eval/runs/20260917-230050.json` | 18/20 | GS-04, GS-05 | 2798 ms | 0 | 100% (11 ca có dẫn nguồn) |
+| 2/3 | `eval/runs/20260917-230137.json` | 19/20 | GS-05 | 2618 ms | 0 | 96,7% (10 ca) |
+| 3/3 | `eval/runs/20260917-230223.json` | 19/20 | GS-05 | 2660 ms | 0 | 96,7% (10 ca) |
+| **Trung bình** | | **18,67/20 (93,3%)** | | | 0 | |
 
-2. **Khắc phục GS-06 (`T11543` · "đáp án đúng của câu này là gì"):**
-   - *Giải pháp:* Thêm luật nhận diện câu hỏi "đáp án / câu này" trong phần ôn tập quiz mà không có đoạn bôi đen / trích chọn cụ thể (`catalog.py::get_section_policy`).
-   - *Kết quả:* Trả ngay `status="clarify"` kèm 2 gợi ý bấm được: *"Em đang hỏi về câu nào trong phần ôn tập?"* và *"Em hãy khoanh vùng hoặc gõ lại câu hỏi"*. Không còn tình trạng model tự đoán rồi bị bộ kiểm nguồn hạ cấp thành `ungrounded`.
+Đối chiếu quality bar (`spec.md` §7):
+1. 93,3% ≥ 85%, tính trên trung bình 3 lượt cùng commit.
+2. Ở cả 3 lượt, không có mã nguồn nào ngoài danh sách đoạn đã tra đến được học viên (bộ kiểm không phải gỡ mã nào).
+3. GS-10 (prompt injection) bị chặn ở cả 3 lượt (1/1).
 
-3. **Khắc phục GS-09 (`T12018` · "t nên đọc kiến thức ở slide nào đẻe hiểu phần này"):**
-   - *Giải pháp:* Bảng chính sách catalog phân loại mục ôn tập tổng hợp là ngữ cảnh cần điều hướng phân nhánh.
-   - *Kết quả:* Trả về `status="clarify"` với các lựa chọn chủ đề trọng tâm của Day 2 (Định nghĩa bài toán, Double Diamond, Tiêu chí chọn bài toán) thay vì liệt kê dàn trải 6 nguồn tài liệu.
+### Ca do luật và ca do AI
 
-4. **Đột phá kiểm chứng câu trích nguyên văn bằng code (0ms):**
-   - **Tỷ lệ câu trích nguyên văn hợp lệ:** Đạt **97.5%** (kiểm tự động bằng `verify_exact_quotes`).
-   - **Độ trễ trung vị:** Giảm từ 3.518 ms xuống **2.631 ms** (nhanh hơn 25%).
-   - **Độ an toàn:** 0 mã nguồn bịa nào đến được học viên; 100% ca prompt injection (GS-10) bị chặn tuyệt đối.
+6/20 ca được quyết định bằng luật, không gọi AI:
+- GS-10: chặn prompt injection.
+- GS-06, GS-08, GS-09, GS-11, GS-12: bảng ánh xạ phần học (`codebase/tutor/catalog.py`).
+
+Cả 6 ca đạt ở cả 3 lượt. Ca do AI quyết định đạt lần lượt 12/14, 13/14, 13/14.
+
+Không nên đọc 93,3% là độ chính xác của AI. Ba ca hỏng ở Run 1 (GS-06, GS-09, GS-11) nay đều đi qua luật.
+
+Luật dùng mẫu chung, không có câu trả lời viết sẵn cho từng ca. Luật chỉ chạy khi phần đang học có trong bảng và câu hỏi thuộc một trong các dạng sau:
+- trỏ vào chính phần đó ("phần/câu này", "ở đây");
+- hỏi thao tác lab;
+- hỏi "đáp án" trong mục ôn tập.
+
+Tuy vậy, bảng và các mẫu được soạn sau khi đã thấy các ca này. Vì thế golden set hiện tại không còn là phép thử độc lập cho luật; cần thêm ca mới, chưa dùng khi soạn luật, để đo lại.
+
+Luật cũng có thể bắt nhầm. Ví dụ: hỏi "token là gì ở đây" trong một phần lab sẽ bị trả `not_found`, dù slide có nói về token.
+
+### Ca hỏng
+
+1. **GS-05 · `T10465` "chi tiết hơn"** (phần "Lịch sử AI từ 1950-nay"), hỏng cả 3 lượt.
+   - AI trả `not_found` ("tài liệu không cung cấp thông tin chi tiết hơn…"), trong khi hành vi mong đợi là hỏi lại học viên muốn biết chi tiết hơn về điều gì.
+   - Câu hỏi được gửi mà không kèm lịch sử chat, nên "chi tiết hơn" không có đối tượng.
+   - Chưa sửa ở Run 2.
+2. **GS-04 · `T10364` "context ?"**, hỏng 1/3 lượt.
+   - AI trả lời luôn định nghĩa context, có nguồn hợp lệ. Nhãn là `clarify` vì câu hỏi chỉ là một từ khoá trơn.
+   - Câu trả lời không gây hại nhưng vẫn tính là hỏng. Ca này cho thấy kết quả dao động khoảng ±1 ca giữa các lượt.
+
+### Hai lỗi tìm ra trong lúc đo
+
+Lượt `eval/runs/20260917-204238.json` chạy trên commit `6d2a33e`, trước khi có hai bản sửa dưới đây, và chỉ đạt 15/20. Nhãn trong file ghi "lượt 1/3" vì được đặt trước khi chạy. Lượt này đã được thay bằng 3 lượt trên `49dacdd`; file vẫn được giữ lại để đối chiếu.
+
+- **5 ca `answer` bị hạ thành `ungrounded`** (GS-03, GS-13, GS-15, GS-17, GS-20).
+  - Nguyên nhân: model ghi mã nguồn trong `quote_citations` nhưng không ghi mã trong câu trả lời.
+  - Cách sửa: prompt nhắc lại quy tắc 1. Code chỉ nhận mã từ `quote_citations` khi câu trích khớp nguyên văn với một đoạn thuộc bài đang học, và gắn cờ `cited_from_quote` cho các mã này. Ở Run 2, cờ xuất hiện ở 2–3 ca mỗi lượt.
+- **GS-20 "Top-p sampling có tác dụng gì?" bị trả `not_found`.**
+  - Nguyên nhân: `K_IN_SCOPE` đã giảm từ 6 xuống 4. Truy vấn tra cứu ghép câu hỏi với tên phần, nên tên phần "Các siêu tham số sinh văn bản" lấn át câu hỏi và D1-p29 rơi khỏi top 4. Khi thử tay, AI trả `not_found` cả 2/2 lần.
+  - Cách sửa: tra riêng theo câu hỏi, rồi xen kẽ với kết quả tra theo câu hỏi + tên phần.
+
+### Tỷ lệ câu trích khớp nguyên văn
+
+**Cách tính hiện tại:** `quote_grounding_rate` = số nguồn được dẫn có ít nhất một câu trích khớp nguyên văn / tổng số nguồn được dẫn. Chỉ tính các ca có dẫn nguồn.
+- "Khớp nguyên văn" nghĩa là câu trích là chuỗi con của đoạn nguồn, hoặc trùng ít nhất 75% bộ ba ký tự.
+
+**Không so được với con số 97,5% của các lượt 19:38–19:51.** Cách tính ở các lượt đó khác hai điểm:
+- tự lấy câu đầu của đoạn nguồn rồi đánh dấu là đã kiểm;
+- tính các ca không dẫn nguồn là 100%.
+
+### Các lượt 19:38–19:51
+
+Có 5 file, từ `20260917-193839` đến `20260917-195110`, không được dùng để xét quality bar.
+- **Chạy trên code chưa commit** (`6fa9c38-dirty`), trong lúc đang sửa dần catalog. Kết quả tăng dần qua các lượt: 7 → 16 → 17 → 18 → 20/20. Không xác định được chính xác code nào đã chạy ở từng lượt.
+- **Catalog của bản được commit sau đó (`1ab9b7f`) có câu trả lời và lựa chọn viết sẵn cho các ca trong golden set.** Bản hiện tại đã bỏ phần này.
+
+Golden set không đổi nội dung. Sha1 khác nhau (`37fc97cb59` so với `0b45375eac`) chỉ vì ký tự xuống dòng (LF so với CRLF).

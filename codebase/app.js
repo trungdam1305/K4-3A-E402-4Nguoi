@@ -354,7 +354,7 @@ function updateComparison(run, turn) {
   }
 
   if (run && badgeEl) {
-    const [cls, icon, label] = STATUS[run.status] || STATUS.not_found;
+    const [cls, icon, label] = statusOf(run);
     badgeEl.innerHTML = `<span class="inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-xs font-medium ${cls}"><i class="ph-bold ${icon}"></i> ${escapeHtml(label(run))}</span>`;
   }
 
@@ -450,13 +450,19 @@ const STATUS = {
   not_found: ['bg-rose-50 text-rose-700 border-rose-200', 'ph-shield-warning', () => 'Không có trong bài'],
   ungrounded: ['bg-orange-50 text-orange-700 border-orange-200', 'ph-warning', () => 'Không đủ căn cứ'],
   search_only: ['bg-zinc-100 text-zinc-700 border-zinc-200', 'ph-magnifying-glass', () => 'Chỉ tìm kiếm từ khoá'],
+  blocked: ['bg-rose-50 text-rose-700 border-rose-200', 'ph-shield', () => 'Chặn prompt lạ — không gửi tới AI'],
 };
 
+// Câu bị luật injection chặn vẫn có status not_found (để chấm eval), nhưng hiển thị là "bị chặn".
+function statusOf(r) {
+  const key = (r.flags || []).includes('injection') ? 'blocked' : (r.status || r.actual_status);
+  return STATUS[key] || STATUS.not_found;
+}
+
 function renderRun(bubble, run) {
-  const [cls, icon, label] = STATUS[run.status] || STATUS.not_found;
+  const [cls, icon, label] = statusOf(run);
   const badges = [`<span class="inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-[10.5px] font-medium ${cls}"><i class="ph-bold ${icon}"></i> ${escapeHtml(label(run))}</span>`];
-  if (run.mode !== 'llm' && run.status !== 'search_only') badges.push('<span class="border rounded-md px-2 py-0.5 bg-zinc-100 text-zinc-600 border-zinc-200">Chưa qua AI</span>');
-  if (run.flags.includes('injection')) badges.push('<span class="border rounded-md px-2 py-0.5 bg-rose-50 text-rose-700 border-rose-200"><i class="ph ph-shield"></i> Chặn prompt lạ</span>');
+  if (run.mode === 'retrieval-only' && run.status !== 'search_only') badges.push('<span class="border rounded-md px-2 py-0.5 bg-zinc-100 text-zinc-600 border-zinc-200">Chưa qua AI</span>');
   if (run.flags.includes('section_mismatch')) badges.push('<span class="border rounded-md px-2 py-0.5 bg-amber-50 text-amber-700 border-amber-200"><i class="ph ph-link-break"></i> Thuộc phần khác</span>');
   if (run.excluded.length) badges.push(`<span class="border rounded-md px-2 py-0.5 bg-zinc-100 text-zinc-600 border-zinc-200">Bỏ nguồn ${run.excluded.map(escapeHtml).join(', ')}</span>`);
 
@@ -495,11 +501,11 @@ function renderRun(bubble, run) {
     </div>
     <div class="mt-1.5 text-[10px] text-zinc-400 flex flex-wrap items-center justify-between font-mono">
       <div class="flex items-center gap-2">
-        <span class="text-zinc-600 font-medium">${escapeHtml(run.model || 'no-ai')}</span>
+        <span class="text-zinc-600 font-medium">${escapeHtml(run.model || (run.mode === 'rule' ? 'luật chặn · không gọi AI' : 'không gọi AI'))}</span>
         <span>•</span>
         <span>${ms}</span>
       </div>
-      <button type="button" data-evidence="${run.run_id}" class="text-zinc-600 hover:underline">xem ${run.retrieved.length} đoạn đã tra</button>
+      ${run.retrieved.length ? `<button type="button" data-evidence="${run.run_id}" class="text-zinc-600 hover:underline">xem ${run.retrieved.length} đoạn đã tra</button>` : ''}
     </div>`;
   scrollChat();
   updateComparison(run, state.currentTurn);
@@ -524,7 +530,10 @@ async function ask(raw, { display, turn = null, exclude = [], section = null, th
     state.runs[run.run_id] = { run, raw, section: sec };
     renderRun(bubble, run);
     renderEvidence(run);
-    state.history.push({ role: 'user', text: run.question }, { role: 'assistant', text: run.answer });
+    // Lượt bị chặn không vào lịch sử, để chỉ dẫn lạ không theo các câu hỏi sau gửi tới AI.
+    if (!run.flags.includes('injection')) {
+      state.history.push({ role: 'user', text: run.question }, { role: 'assistant', text: run.answer });
+    }
     const first = run.citations[0] || run.where_ids?.[0];
     if (first) openSource(first);
     if (then === 'report_first_citation' && run.citations.length) {
@@ -711,7 +720,7 @@ async function loadGoldenSet() {
       state.currentTurn = oldTurn;
 
       if (res) {
-        const [cls, icon, label] = STATUS[res.actual_status] || STATUS.not_found;
+        const [cls, icon, label] = statusOf(res);
         if (badgeEl) {
           badgeEl.innerHTML = `<span class="inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-xs font-medium ${cls}"><i class="ph-bold ${icon}"></i> ${escapeHtml(label({ citations: res.citations || [] }))}</span>`;
         }

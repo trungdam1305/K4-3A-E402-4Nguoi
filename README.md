@@ -12,6 +12,10 @@
 
 | Họ và Tên | Mã Học Viên | Vai trò chính | Phần việc đảm nhiệm trong dự án |
 |---|---|---|---|
+|Đàm Quang Trung  |2A202602525  |Leader  |  |
+|Thái Hữu Tuấn  |2A202602465  |Evaluation & Grounding Reviewer  |Chấm độc lập case khó, kiểm citation đúng ngữ cảnh, đối chiếu quality bar  |
+|Võ Minh Quân  |2A202602429  |  |  |
+|Phan Trọng Hoàn  |2A202602954  |  |  |
 
 
 > **Willing Users (đã khai từ CP1):** Đào Đức Hải, Nguyễn Xuân Trường Giang, Võ Doanh Nhân, Nguyễn Nhân Sâm (Lớp 3A · Phòng E402).

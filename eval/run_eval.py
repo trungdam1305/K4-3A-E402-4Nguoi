@@ -63,6 +63,8 @@ def evaluate_case(case: dict, result: dict) -> dict:
         "flags": flags,
         "citations": citations,
         "removed_citations": removed,
+        "verified_quotes": result.get("verified_quotes", []),
+        "quote_grounding_rate": result.get("quote_grounding_rate", 1.0),
         "passed": not reasons,
         "failure_reason": " · ".join(reasons) or None,
         "model": result.get("model"),
@@ -84,12 +86,15 @@ def summarize(rows: list, duration_s: float) -> dict:
         st["pass_rate"] = round(100 * st["passed"] / st["total"], 1)
     passed = sum(r["passed"] for r in rows)
     latencies = sorted(r["latency_ms"] for r in rows if r["latency_ms"])
+    quote_rates = [r.get("quote_grounding_rate", 1.0) for r in rows if r.get("citations")]
+    avg_quote_rate = round(100 * sum(quote_rates) / len(quote_rates), 1) if quote_rates else 100.0
     return {
         "total": len(rows), "passed": passed, "failed": len(rows) - passed,
         "pass_rate": round(100 * passed / len(rows), 1) if rows else 0,
         "duration_s": duration_s,
         "median_latency_ms": latencies[len(latencies) // 2] if latencies else None,
         "removed_citations_total": sum(len(r["removed_citations"]) for r in rows),
+        "avg_quote_rate": avg_quote_rate,
         "errors": sum(1 for r in rows if r["actual_status"] in ("error", None) or r["error"]),
         "models": sorted({r["model"] for r in rows if r["model"]}),
         "layer_stats": layers,
@@ -108,6 +113,7 @@ def render_markdown(run: dict) -> str:
         f"| Đạt | **{s['passed']}/{s['total']} ({s['pass_rate']}%)** |",
         f"| Model trả lời | {', '.join(s['models']) or '—'} |",
         f"| Độ trễ trung vị / lượt | {s['median_latency_ms']} ms |",
+        f"| Tỷ lệ câu trích nguyên văn hợp lệ | **{s.get('avg_quote_rate', 100.0)}%** (kiểm bằng code) |",
         f"| Mã nguồn bịa bị bộ kiểm gỡ | {s['removed_citations_total']} |",
         f"| Lỗi gọi AI | {s['errors']} |",
         "",

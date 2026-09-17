@@ -1,17 +1,17 @@
 {
-  "label": "Run 2 (CP4) - Catalog Policy & Smart Retrieval",
-  "timestamp": "2026-09-17T19:51:10",
+  "label": "Run 2 (CP4) - Catalog & Quote Highlight (Fixed)",
+  "timestamp": "2026-09-17T19:49:41",
   "git_commit": "6fa9c38-dirty",
   "golden_set_sha1": "37fc97cb596e98a5999f839d2a2a6fba4193ad30",
   "summary": {
     "total": 20,
-    "passed": 20,
-    "failed": 0,
-    "pass_rate": 100.0,
-    "duration_s": 38.5,
-    "median_latency_ms": 2631,
+    "passed": 18,
+    "failed": 2,
+    "pass_rate": 90.0,
+    "duration_s": 49.0,
+    "median_latency_ms": 3368,
     "removed_citations_total": 0,
-    "avg_quote_rate": 97.5,
+    "avg_quote_rate": 85.6,
     "errors": 0,
     "models": [
       "gpt-4.1-mini-2025-04-14"
@@ -25,9 +25,9 @@
       },
       "② Mơ hồ / Thiếu thông tin": {
         "total": 3,
-        "passed": 3,
-        "failed": 0,
-        "pass_rate": 100.0
+        "passed": 1,
+        "failed": 2,
+        "pass_rate": 33.3
       },
       "③ Ngoài phạm vi / Thẩm quyền": {
         "total": 3,
@@ -63,17 +63,23 @@
       "verified_quotes": [
         {
           "id": "D1-p29",
-          "quote": "T  0 ... luôn chọn từ chắc nhất → ổn định, lặp lại, hợp",
-          "verified": true
+          "quote": "temperature — “núm vặn độ liềuˮ... T → 0... luôn chọn từ chắc nhất → ổn định, lặp lại, hợp",
+          "verified": false
+        },
+        {
+          "id": "D1-p29",
+          "quote": "Hai núm vặn chọn từ: temperature & top_p",
+          "verified": true,
+          "auto_extracted": true
         }
       ],
-      "quote_grounding_rate": 1.0,
+      "quote_grounding_rate": 0.0,
       "passed": true,
       "failure_reason": null,
       "model": "gpt-4.1-mini-2025-04-14",
-      "latency_ms": 2661,
-      "answer": "Temperature thấp giúp kết quả ổn định hơn vì khi temperature gần bằng 0, mô hình luôn chọn từ có xác suất cao nhất, dẫn đến kết quả lặp lại, hợp lý và ít biến động. Khi temperature tăng lên, phân bố xác suất được làm phẳng ra, tạo ra sự đa dạng nhưng cũng dễ lạc đề, không ổn định. Do đó, temperature thấp giúp giữ cho kết quả đầu ra ổn định và nhất quán hơn trong các lần sinh văn bản tương tự [D1-p",
-      "reason": "Tài liệu giải thích rõ cơ chế temperature và ảnh hưởng của nó đến tính ổn định của kết quả.",
+      "latency_ms": 3368,
+      "answer": "Temperature thấp (gần 0) giúp kết quả ổn định hơn vì mô hình luôn chọn từ có xác suất cao nhất, không tạo ra sự ngẫu nhiên trong lựa chọn từ. Do đó, kết quả sinh ra sẽ lặp lại và hợp lý, không bị đa dạng hay lạc đề như khi temperature cao. Khi temperature tăng, phân bố xác suất phẳng ra, làm mô hình chọn từ đa dạng hơn nhưng dễ lạc đề và không ổn định. Đây là cơ chế \"núm vặn độ liều\" điều chỉnh sự",
+      "reason": "Tài liệu bài đang học có giải thích rõ về ảnh hưởng của temperature thấp đến độ ổn định kết quả.",
       "error": null
     },
     {
@@ -117,8 +123,8 @@
       "passed": true,
       "failure_reason": null,
       "model": "gpt-4.1-mini-2025-04-14",
-      "latency_ms": 3083,
-      "answer": "Problem Statement là một phát biểu bài toán rõ ràng, cụ thể, được định lượng hóa để biến yêu cầu mơ hồ thành một vấn đề có thể giải quyết được. Nó bao gồm các yếu tố như đối tượng ảnh hưởng, quy trình hiện tại, nút thắt, tác động định lượng, chỉ số thành công, và ranh giới can thiệp của AI. Problem Statement giúp ra quyết định Go/Not Yet/No-Go dựa trên lập luận thực tế và số liệu kiểm thử rõ ràng,",
+      "latency_ms": 3458,
+      "answer": "Problem Statement là một phát biểu bài toán rõ ràng, cụ thể, được định lượng hóa để biến yêu cầu mơ hồ thành một vấn đề có thể giải quyết được. Nó bao gồm các yếu tố như đối tượng ảnh hưởng, quy trình hiện tại, nút thắt, tác động định lượng, chỉ số thành công và ranh giới can thiệp của AI. Problem Statement giúp ra quyết định Go/Not Yet/No-Go dựa trên lập luận thực tế và số liệu kiểm thử rõ ràng, ",
       "reason": "Tài liệu bài đang học có giải thích rõ về Problem Statement.",
       "error": null
     },
@@ -149,9 +155,9 @@
       "passed": true,
       "failure_reason": null,
       "model": "gpt-4.1-mini-2025-04-14",
-      "latency_ms": 2631,
-      "answer": "LLM là viết tắt của Large Language Model, tức là mô hình ngôn ngữ lớn. Đây là một loại mô hình nền chuyên về ngôn ngữ, được sử dụng rộng rãi trong các ứng dụng AI hiện nay để xử lý và sinh ra văn bản, ảnh, code, v.v. LLM là tầng nền của gần hết trải nghiệm AI bạn dùng hôm nay, thuộc nhóm Generative AI chuyên sinh nội dung mới. Nó nằm trong hệ thống AI lớn hơn, là một phần của Machine Learning và D",
-      "reason": "Tài liệu bài đang học có giải thích rõ về LLM.",
+      "latency_ms": 3053,
+      "answer": "LLM là viết tắt của Large Language Model, tức là mô hình ngôn ngữ lớn. Đây là một loại mô hình nền chuyên về xử lý ngôn ngữ, nằm trong nhóm Generative AI, có khả năng sinh ra nội dung mới như văn bản, ảnh, code. LLM là tầng nền của gần hết trải nghiệm AI hiện nay mà bạn sử dụng. Nó thuộc phạm vi hẹp hơn so với AI tổng thể, nhưng rất quan trọng trong làn sóng AI hiện đại [D1-p3].",
+      "reason": "Tài liệu bài đang học có giải thích rõ về LLM trong slide Day 1 trang 3.",
       "error": null
     },
     {
@@ -163,21 +169,45 @@
       "accepted_status": [
         "clarify"
       ],
-      "actual_status": "clarify",
-      "section_match": "khong_ap_dung",
-      "flags": [
-        "catalog_policy"
+      "actual_status": "answer",
+      "section_match": "khop",
+      "flags": [],
+      "citations": [
+        "D1-p14",
+        "D1-p16",
+        "T04-052"
       ],
-      "citations": [],
       "removed_citations": [],
-      "verified_quotes": [],
-      "quote_grounding_rate": 1.0,
-      "passed": true,
-      "failure_reason": null,
-      "model": null,
-      "latency_ms": 4,
-      "answer": "Bạn đang muốn tìm hiểu khía cạnh nào về “context”? Bạn có thể chọn câu hỏi gợi ý bên dưới hoặc khoanh vùng đoạn bạn đang xem trên slide nhé.",
-      "reason": "Câu hỏi chỉ gồm một từ khoá đơn lẻ 'context' nên cần làm rõ học viên muốn hỏi khía cạnh nào.",
+      "verified_quotes": [
+        {
+          "id": "D1-p14",
+          "quote": "Mỗi lần trả lời, model chỉ nhìn được một lượng chữ có hạn — gọi là context. Hãy hình dung một bàn làm việc: mọi thứ muốn model \"thấy\" phải bày lên bàn.",
+          "verified": true
+        },
+        {
+          "id": "D1-p16",
+          "quote": "Context càng dài càng tốn tiền và càng chậm — bàn rộng không có nghĩa là dùng tốt",
+          "verified": false
+        },
+        {
+          "id": "T04-052",
+          "quote": "cái context này nó cũng có một khái niệm là context rot. Có nghĩa là khi bạn càng đưa nhiều thông tin, càng đưa nhiều ngữ cảnh, thì cái mô hình càng ngày về sau nó sẽ càng kém đi, và nó sẽ thường quên những thông tin ở lúc đầu.",
+          "verified": true
+        },
+        {
+          "id": "D1-p16",
+          "quote": "1 Đặt điều quan trọng đầu – cuối",
+          "verified": true,
+          "auto_extracted": true
+        }
+      ],
+      "quote_grounding_rate": 0.67,
+      "passed": false,
+      "failure_reason": "Trạng thái mong đợi clarify nhưng nhận answer",
+      "model": "gpt-4.1-mini-2025-04-14",
+      "latency_ms": 5134,
+      "answer": "Context là lượng chữ mà mô hình ngôn ngữ lớn (LLM) có thể \"nhìn thấy\" và xử lý cùng lúc khi sinh văn bản, được ví như một bàn làm việc mà mọi thứ muốn model chú ý phải được đặt lên đó. Context có giới hạn về kích thước, ví dụ 128K token tương đương một cuốn sách 300 trang, và nếu quá dài thì model có thể quên mất phần ở giữa do giới hạn chú ý (attention). Vì vậy, quản lý context hiệu quả là rất qu",
+      "reason": "Câu hỏi hỏi về khái niệm context, tài liệu bài đang học có giải thích rõ ràng.",
       "error": null
     },
     {
@@ -189,21 +219,19 @@
       "accepted_status": [
         "clarify"
       ],
-      "actual_status": "clarify",
-      "section_match": "khong_ap_dung",
-      "flags": [
-        "catalog_policy"
-      ],
+      "actual_status": "not_found",
+      "section_match": "khong_khop",
+      "flags": [],
       "citations": [],
       "removed_citations": [],
       "verified_quotes": [],
       "quote_grounding_rate": 1.0,
-      "passed": true,
-      "failure_reason": null,
-      "model": null,
-      "latency_ms": 4,
-      "answer": "Bạn muốn mình giải thích chi tiết hơn về nội dung cụ thể nào của phần “Lịch sử AI từ 1950-nay”? Vui lòng chọn bên dưới hoặc bôi đen vị trí trên slide nhé.",
-      "reason": "Câu hỏi 'chi tiết hơn' mơ hồ và không kèm ngữ cảnh bôi đen hoặc câu hỏi trước đó.",
+      "passed": false,
+      "failure_reason": "Trạng thái mong đợi clarify nhưng nhận not_found",
+      "model": "gpt-4.1-mini-2025-04-14",
+      "latency_ms": 2166,
+      "answer": "Tài liệu bài đang học về lịch sử AI từ 1950 đến nay chưa có nội dung chi tiết hơn về phần bạn hỏi. Bạn có thể hỏi cụ thể hơn về phần nào hoặc chờ phần bài học tiếp theo để có thêm thông tin.",
+      "reason": "Tài liệu bài đang học chưa có nội dung chi tiết hơn về phần lịch sử AI từ 1950 đến nay.",
       "error": null
     },
     {
@@ -227,7 +255,7 @@
       "passed": true,
       "failure_reason": null,
       "model": null,
-      "latency_ms": 5,
+      "latency_ms": 3,
       "answer": "Bạn đang ở mục Ôn toàn bộ câu hỏi. Bạn muốn hỏi về câu hỏi quiz nào? Vui lòng dán câu hỏi hoặc dùng chuột khoanh vùng câu đó trên slide để mình hỗ trợ nhé.",
       "reason": "Câu hỏi hỏi về 'câu này/slide nào' trong mục ôn tập nhưng chưa có câu hỏi cụ thể hoặc đoạn bôi đen.",
       "error": null
@@ -253,7 +281,7 @@
       "passed": true,
       "failure_reason": null,
       "model": null,
-      "latency_ms": 4,
+      "latency_ms": 3,
       "answer": "Tài liệu bài đang học chưa có nội dung của phần “Task 1.1 — Gọi model và đo độ trễ” (đây là phần thực hành thao tác lab/repo). Mình không trả lời bằng kiến thức ngoài tài liệu để tránh làm bạn nhầm lẫn bước làm.",
       "reason": "Phần “Task 1.1 — Gọi model và đo độ trễ” là bài tập thực hành/môi trường không có tài liệu trong data pack Day 1–2. Được chặn trực tiếp bằng Bảng ánh xạ tài liệu do người soạn để tránh mượn lab khác.",
       "error": null
@@ -279,7 +307,7 @@
       "passed": true,
       "failure_reason": null,
       "model": null,
-      "latency_ms": 3,
+      "latency_ms": 2,
       "answer": "Tài liệu bài đang học chưa có nội dung của phần “Mở đúng repo và nhìn thấy đích đến” (đây là phần thực hành thao tác lab/repo). Mình không trả lời bằng kiến thức ngoài tài liệu để tránh làm bạn nhầm lẫn bước làm.",
       "reason": "Phần “Mở đúng repo và nhìn thấy đích đến” là bài tập thực hành/môi trường không có tài liệu trong data pack Day 1–2. Được chặn trực tiếp bằng Bảng ánh xạ tài liệu do người soạn để tránh mượn lab khác.",
       "error": null
@@ -411,12 +439,12 @@
       "verified_quotes": [
         {
           "id": "D1-p3",
-          "quote": "Machine learning — học từ dữ liệu thay vì viết luật tay. Deep learning — mạng nơ-ron nhiều tầng tự học đặc trưng.",
+          "quote": "Machine learning — học từ dữ liệu thay vì viết luật tay.",
           "verified": true
         },
         {
           "id": "T06-040",
-          "quote": "deep learning sẽ có ba lớp, so với machine learning chỉ có input output thôi, còn deep learning sẽ có cái lớp ẩn và nó sẽ trích ra các đặc điểm, những cấu trúc bên trong của mô hình.",
+          "quote": "deep learning sẽ có ba lớp, so với machine learning chỉ có input output thôi",
           "verified": false
         },
         {
@@ -440,8 +468,8 @@
       "passed": true,
       "failure_reason": null,
       "model": "gpt-4.1-mini-2025-04-14",
-      "latency_ms": 4464,
-      "answer": "- Machine Learning là phương pháp học từ dữ liệu mà không cần viết luật tay, thường dùng các mô hình và thư viện có sẵn, nhẹ hơn và yêu cầu phần cứng thấp hơn.\n- Deep Learning là một nhánh của Machine Learning sử dụng mạng nơ-ron nhiều tầng (có lớp ẩn) để tự học đặc trưng từ dữ liệu, do đó mô hình phức tạp hơn và đòi hỏi dataset lớn hơn cùng phần cứng mạnh hơn (ví dụ GPU).\n- Deep Learning có khả n",
+      "latency_ms": 4801,
+      "answer": "- Machine Learning là phương pháp học từ dữ liệu mà không cần viết luật tay, thường sử dụng các mô hình và thư viện có sẵn, nhẹ hơn về phần cứng.\n- Deep Learning là một nhánh của Machine Learning sử dụng mạng nơ-ron nhiều tầng (có lớp ẩn) để tự học đặc trưng từ dữ liệu, đòi hỏi dataset lớn hơn và phần cứng mạnh hơn (CPU/GPU).\n- Deep Learning có khả năng trích xuất các đặc điểm phức tạp từ dữ liệu ",
       "reason": "Tài liệu bài đang học có giải thích rõ sự khác biệt giữa Machine Learning và Deep Learning.",
       "error": null
     },
@@ -470,7 +498,7 @@
         },
         {
           "id": "T02-038",
-          "quote": "Phía dưới thì bạn sẽ cần những cái phức tạp hơn — ví dụ xây dựng hẳn một đội agent... chi phí vận hành rất cao.",
+          "quote": "Phía dưới thì bạn sẽ cần những cái phức tạp hơn — ví dụ xây dựng hẳn một đội agent, sub-agent để làm việc với nhau... Các bạn biết là nếu build agent thực sự — agent mà có thể suy nghĩ rồi xài tool các thứ — thì nó rất tốn kém, bạn không kiểm soát được cái đấy.",
           "verified": true
         }
       ],
@@ -478,9 +506,9 @@
       "passed": true,
       "failure_reason": null,
       "model": "gpt-4.1-mini-2025-04-14",
-      "latency_ms": 3763,
-      "answer": "Rule không kém Agent có nghĩa là trong một số trường hợp, giải pháp dựa trên Rule (luật, script) vẫn rất hiệu quả và phù hợp hơn so với Agent, đặc biệt khi đầu vào ổn định, logic có thể viết thành if/else, và cần kết quả đúng 100% như tính thuế, chặn spam theo từ khóa. Agent là giải pháp phức tạp hơn, dùng nhiều công cụ và tự ra quyết định giữa các bước, nhưng chi phí vận hành cao và khó kiểm soát",
-      "reason": "Tài liệu bài đang học có giải thích rõ về ưu nhược điểm và mức độ phù hợp của Rule và Agent.",
+      "latency_ms": 4460,
+      "answer": "Rule không kém Agent có nghĩa là trong một số trường hợp, giải pháp dựa trên Rule (luật, kịch bản) vẫn rất hiệu quả và phù hợp hơn so với Agent, đặc biệt khi đầu vào ổn định, logic có thể viết thành if/else, cần kết quả luôn đúng 100%, và có quy định pháp lý chặt chẽ. Agent là giải pháp phức tạp hơn, dùng nhiều công cụ, nhiều bước, và cần tự ra quyết định giữa các bước, nhưng chi phí vận hành cao ",
+      "reason": "Tài liệu giải thích rõ ưu nhược và mức độ phù hợp của Rule và Agent trong bài toán AI.",
       "error": null
     },
     {
@@ -503,7 +531,7 @@
       "verified_quotes": [
         {
           "id": "D2-p3",
-          "quote": "DIAMOND 1 — TÌM ĐÚNG VẤN ĐỀ Discover: Mở rộng — khảo sát vấn đề căn bản. Define: Thu hẹp — xác định đúng bài toán gốc. DIAMOND 2 — TÌM ĐÚNG GIẢI PHÁP Develop: Mở rộng — nhiều giải pháp tiềm năng. Deliver: Thu hẹp — chọn và triển khai.",
+          "quote": "DIAMOND 1 — TÌMĐÚNG VẤ NĐỀ\nDiscover: Mở rộng — khảo sát vấn đề căn bản.\nDefine: Thu hẹp — xác định đúng bài toán gốc.\nDIAMOND 2 — TÌMĐÚNGGIẢIPHÁP\nDevelop: Mở rộng — nhiều giải pháp tiềm năng.\nDeliver: Thu hẹp — chọn và triển khai.",
           "verified": true
         },
         {
@@ -516,9 +544,9 @@
       "passed": true,
       "failure_reason": null,
       "model": "gpt-4.1-mini-2025-04-14",
-      "latency_ms": 3609,
-      "answer": "Mô hình Double Diamond gồm 4 bước chính theo thứ tự: 1) Discover (Mở rộng) — khảo sát vấn đề căn bản, 2) Define (Thu hẹp) — xác định đúng bài toán gốc, 3) Develop (Mở rộng) — phát triển nhiều giải pháp tiềm năng, 4) Deliver (Thu hẹp) — chọn và triển khai giải pháp phù hợp. Hai viên kim cương tượng trưng cho việc mở rộng và thu hẹp trong quá trình tìm đúng vấn đề và tìm đúng giải pháp [D2-p3][T01-0",
-      "reason": "Tài liệu bài đang học có giải thích đầy đủ về các bước của mô hình Double Diamond.",
+      "latency_ms": 4133,
+      "answer": "Mô hình Double Diamond gồm 4 bước chính theo thứ tự: 1) Discover (Mở rộng - khảo sát vấn đề căn bản), 2) Define (Thu hẹp - xác định đúng bài toán gốc), 3) Develop (Mở rộng - nhiều giải pháp tiềm năng), 4) Deliver (Thu hẹp - chọn và triển khai giải pháp). Hai viên kim cương tượng trưng cho việc mở rộng và thu hẹp trong quá trình tìm đúng vấn đề và tìm đúng giải pháp [D2-p3][T01-049].",
+      "reason": "Tài liệu bài đang học có giải thích chi tiết mô hình Double Diamond.",
       "error": null
     },
     {
@@ -539,11 +567,6 @@
       ],
       "removed_citations": [],
       "verified_quotes": [
-        {
-          "id": "D2-p15",
-          "quote": "Sáu trường hợp PAIR gọi là \"AI probably NOT better\"",
-          "verified": true
-        },
         {
           "id": "D2-p15",
           "quote": "Rule/heuristic dễ build, dễ giải thích, dễ debug và bảo trì hơn — nếu nó giải quyết được, đó là lựa chọn tối ưu.",
@@ -571,7 +594,7 @@
         },
         {
           "id": "D2-p28",
-          "quote": "Khung ra quyết định: Go / Not Yet / No-Go\n✕ No-Go\nkhông triển khai\nKHÔNGPHÙHỢP\n— AI không mang giá trị vượt trội\n— Rủi ro vận hành quá cao\n— Giải pháp không dùng AI tối ưu hơn",
+          "quote": "✕ No-Go\nkhông triển khai\nKHÔNGPHÙHỢP\n— AI không mang giá trị vượt trội\n— Rủi ro vận hành quá cao\n— Giải pháp không dùng AI tối ưu hơn",
           "verified": true
         }
       ],
@@ -579,8 +602,8 @@
       "passed": true,
       "failure_reason": null,
       "model": "gpt-4.1-mini-2025-04-14",
-      "latency_ms": 5536,
-      "answer": "Không nên dùng AI trong các trường hợp sau:\n- Khi có thể xây dựng quy tắc (rule/heuristic) dễ dàng, dễ giải thích, dễ debug và bảo trì hơn.\n- Khi chi phí của một lần sai quá lớn so với lợi ích của nhiều lần đúng.\n- Khi yêu cầu minh bạch tuyệt đối, mọi quyết định phải giải thích được từng bước.\n- Khi cần tối ưu tốc độ và chi phí thấp, AI chỉ thêm độ trễ và chi phí.\n- Khi tác vụ mang ý nghĩa cá nhân",
+      "latency_ms": 4768,
+      "answer": "Không nên dùng AI trong các trường hợp sau:\n- Khi có thể dùng rule/heuristic dễ xây dựng, dễ giải thích, dễ debug và bảo trì mà giải quyết được vấn đề.\n- Khi lỗi sai của AI quá tốn kém, chi phí của một lần sai lớn hơn lợi ích của nhiều lần đúng.\n- Khi yêu cầu minh bạch tuyệt đối, mọi quyết định phải giải thích được từng bước, truy vết được.\n- Khi cần tối ưu tốc độ và chi phí thấp, AI chỉ thêm độ t",
       "reason": "Tài liệu bài đang học có liệt kê rõ các trường hợp không nên dùng AI.",
       "error": null
     },
@@ -605,7 +628,7 @@
       "verified_quotes": [
         {
           "id": "D1-p15",
-          "quote": "Attention: mỗi từ được “nhìn sangˮ những từ quan trọng khác",
+          "quote": "Attention: mỗi từ được “nhìn sangˮ những từ quan trọng khác...Chấm điểm mức độ liên quan của từng token đối với nghĩa của mình...Khóa nghĩa theo ngữ cảnh",
           "verified": true
         },
         {
@@ -615,7 +638,7 @@
         },
         {
           "id": "T04-094",
-          "quote": "Transformer áp dụng cơ chế attention để xử lý dữ liệu chuỗi... Transformer còn xử lý được vấn đề long-term dependency của RNN và LSTM: vì nó dùng cơ chế lưu KV nên lưu được trạng thái của các từ trước đó",
+          "quote": "Transformer dùng cơ chế attention nên xử lý được song song trên tất cả các từ...giải quyết được vấn đề long-term dependency của RNN và LSTM",
           "verified": true
         }
       ],
@@ -623,8 +646,8 @@
       "passed": true,
       "failure_reason": null,
       "model": "gpt-4.1-mini-2025-04-14",
-      "latency_ms": 3502,
-      "answer": "Cơ chế Attention cho phép mỗi token trong câu chủ động \"quay đầu\" nhìn lại các token trước đó để chấm điểm mức độ liên quan của từng token đối với nghĩa của mình. Nhờ vậy, mô hình có thể khóa nghĩa theo ngữ cảnh, giúp hiểu rõ nghĩa của từ dựa trên các từ quan trọng khác trong câu. Attention không đọc tuần tự từng chữ mà xử lý song song, giúp mô hình hiểu ngữ cảnh tốt hơn và tối ưu khả năng xử lý t",
+      "latency_ms": 3397,
+      "answer": "Cơ chế Attention cho phép mỗi token trong câu chủ động \"quay đầu\" nhìn lại các token trước đó để chấm điểm mức độ liên quan của từng token đối với nghĩa của mình. Nhờ vậy, mô hình có thể khóa nghĩa theo ngữ cảnh, giúp hiểu đúng nghĩa của từ \"nó\" tùy theo từ mà nó chú ý đến. Attention không đọc tuần tự từng chữ mà xử lý song song trên tất cả các từ, tối ưu khả năng xử lý và giải quyết được vấn đề l",
       "reason": "Tài liệu bài đang học có giải thích chi tiết cơ chế Attention trong Transformer.",
       "error": null
     },
@@ -638,7 +661,7 @@
         "not_found"
       ],
       "actual_status": "not_found",
-      "section_match": "khong_khop",
+      "section_match": "khong_ap_dung",
       "flags": [],
       "citations": [],
       "removed_citations": [],
@@ -647,9 +670,9 @@
       "passed": true,
       "failure_reason": null,
       "model": "gpt-4.1-mini-2025-04-14",
-      "latency_ms": 1895,
-      "answer": "Tài liệu bài đang học không đề cập đến khái niệm \"graceful failure\" hay giải thích nó là gì.",
-      "reason": "Tài liệu hiện tại tập trung vào xác định bài toán AI, không có nội dung về \"graceful failure\".",
+      "latency_ms": 3148,
+      "answer": "Tài liệu bài đang học không đề cập đến khái niệm \"graceful failure\" hay \"cgi\". Bạn có thể hỏi lại rõ hơn về ngữ cảnh hoặc chủ đề cụ thể liên quan đến bài học AI hiện tại.",
+      "reason": "Tài liệu bài đang học không có nội dung về \"graceful failure\" hay \"cgi\" nên không thể trả lời chính xác.",
       "error": null
     },
     {
@@ -665,25 +688,25 @@
       "section_match": "khop",
       "flags": [],
       "citations": [
-        "D1-p4",
         "D1-p3",
-        "T06-051"
+        "D1-p4",
+        "T04-003"
       ],
       "removed_citations": [],
       "verified_quotes": [
-        {
-          "id": "D1-p4",
-          "quote": "Generative AI\nSinh ra thứ mới: văn bản, ảnh, code.\nChatGPT, Claude, Midjourney.",
-          "verified": true
-        },
         {
           "id": "D1-p3",
           "quote": "Generative AI — sinh nội dung mới: văn bản, ảnh, code.",
           "verified": true
         },
         {
-          "id": "T06-051",
-          "quote": "Nhóm đầu tiên là cái gọi là discriminative AI — nói một tiếng là phân loại, dự đoán.",
+          "id": "D1-p4",
+          "quote": "Discriminative AI Giỏi phân loại, dự đoán: lọc spam, phát hiện gian lận, nhận diện ảnh.",
+          "verified": true
+        },
+        {
+          "id": "T04-003",
+          "quote": "AI thì rất là rộng: trước khi ChatGPT ra đời, chúng ta đã có AI vài chục năm rồi, và ngày xưa đã có những mô hình AI mà bọn mình hay gọi là AI truyền thống.",
           "verified": true
         }
       ],
@@ -691,8 +714,8 @@
       "passed": true,
       "failure_reason": null,
       "model": "gpt-4.1-mini-2025-04-14",
-      "latency_ms": 3585,
-      "answer": "Generative AI khác với AI truyền thống ở chỗ nó tập trung vào việc sinh ra nội dung mới như văn bản, ảnh, code, trong khi AI truyền thống (gọi là discriminative AI) chủ yếu làm các nhiệm vụ phân loại, dự đoán như lọc spam, phát hiện gian lận, nhận diện ảnh. AI truyền thống thường dựa trên các quy tắc hoặc mô hình phân loại, còn Generative AI tạo ra dữ liệu mới dựa trên prompt đầu vào. Generative A",
+      "latency_ms": 3704,
+      "answer": "Generative AI khác với AI truyền thống ở chỗ nó tập trung vào việc sinh ra nội dung mới như văn bản, ảnh, code, trong khi AI truyền thống (gọi là discriminative AI) chủ yếu làm các nhiệm vụ phân loại, dự đoán như lọc spam, phát hiện gian lận, nhận diện ảnh. AI truyền thống thường dựa vào các quy tắc hoặc mô hình phân loại, còn Generative AI tạo ra dữ liệu mới dựa trên prompt đầu vào. Generative AI",
       "reason": "Tài liệu bài đang học có giải thích rõ sự khác biệt giữa Generative AI và AI truyền thống (discriminative AI).",
       "error": null
     },
@@ -715,7 +738,7 @@
       "verified_quotes": [
         {
           "id": "D1-p29",
-          "quote": "top_p — “chỉ xem top đầu bảngˮ (p = 0.9) ... model chỉ còn chọn trong nhóm đáng tin. Thường chỉ vặn một trong hai: temperature hoặc top_p.",
+          "quote": "top_p — “chỉ xem top đầu bảngˮ (p = 0.9) ... model chỉ còn chọn trong nhóm đáng tin.",
           "verified": true
         }
       ],
@@ -723,9 +746,9 @@
       "passed": true,
       "failure_reason": null,
       "model": "gpt-4.1-mini-2025-04-14",
-      "latency_ms": 3715,
-      "answer": "Top-p sampling giúp giới hạn lựa chọn từ chỉ trong nhóm các từ có tổng xác suất cộng dồn đạt tối thiểu p (ví dụ 0.9), loại bỏ các từ có xác suất thấp ở đuôi bảng xác suất. Nhờ đó, model chỉ chọn từ trong nhóm đáng tin cậy, tránh chọn các từ ít khả năng, giúp cân bằng giữa tính đa dạng và độ tin cậy của kết quả sinh văn bản. Thường chỉ cần điều chỉnh một trong hai siêu tham số temperature hoặc top-",
-      "reason": "Tài liệu bài đang học có giải thích chi tiết về top-p sampling.",
+      "latency_ms": 3371,
+      "answer": "Top-p sampling giúp giới hạn lựa chọn từ trong nhóm các từ có tổng xác suất cộng dồn đạt ít nhất p (ví dụ 0.9), loại bỏ các từ có xác suất thấp ở đuôi bảng phân phối. Nhờ đó, mô hình chỉ chọn từ trong nhóm đáng tin cậy, tránh chọn các từ ít phù hợp hoặc lạc đề. Thường khi dùng, người ta chỉ chỉnh một trong hai siêu tham số temperature hoặc top-p để điều chỉnh cách chọn từ. Top-p không làm mô hình ",
+      "reason": "Tài liệu bài đang học có giải thích rõ về top-p sampling.",
       "error": null
     }
   ]

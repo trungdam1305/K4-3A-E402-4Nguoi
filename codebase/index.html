@@ -138,14 +138,45 @@
       margin: 0 0 .45rem;
     }
 
-    /* Highlights */
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.15), 0 0 15px rgba(9, 9, 11, 0.08); }
-      50% { box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.4), 0 0 20px rgba(9, 9, 11, 0.2); }
+    /* Highlights & Transcript Spotlight */
+    @keyframes pulseAmberGlow {
+      0% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7), 0 0 15px rgba(245, 158, 11, 0.3);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 0 7px rgba(245, 158, 11, 0.55), 0 0 35px rgba(245, 158, 11, 0.45);
+        transform: scale(1.012);
+      }
+      100% {
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3), 0 0 20px rgba(245, 158, 11, 0.2);
+        transform: scale(1);
+      }
     }
+
     .highlight-active {
-      animation: pulseGlow 1.2s ease-in-out 3;
-      border-color: #18181b !important;
+      animation: pulseAmberGlow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 3 !important;
+      border-color: #f59e0b !important;
+    }
+
+    /* Thẻ đoạn Transcript khi được kích hoạt / chỉ dẫn */
+    .transcript-active-card {
+      border-color: #f59e0b !important;
+      border-left-width: 6px !important;
+      border-left-color: #d97706 !important;
+      background: linear-gradient(to right, #fffbeb 0%, #fefce8 35%, #ffffff 100%) !important;
+      box-shadow: 0 12px 28px -4px rgba(245, 158, 11, 0.25), 0 6px 14px -2px rgba(245, 158, 11, 0.15) !important;
+      position: relative;
+      z-index: 10;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .transcript-active-card .transcript-id-badge {
+      background-color: #d97706 !important;
+      color: #ffffff !important;
+      border-color: #b45309 !important;
+      font-weight: 700 !important;
+      box-shadow: 0 2px 6px rgba(217, 119, 6, 0.35) !important;
     }
 
     /* Floating Chat Transitions (Taxonomy sheet/dialog style) */
@@ -199,54 +230,54 @@
   </div>
 
   <!-- TOP HEADER (Taxonomy / shadcn-ui Clean Navbar) -->
-  <header class="bg-white border-b border-zinc-200 px-6 py-2.5 flex items-center justify-between gap-4 z-20 shrink-0">
-    <div class="flex items-center gap-3 min-w-0">
-      <div class="w-7 h-7 rounded-md bg-zinc-900 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+  <header class="bg-white border-b border-zinc-200 px-6 py-3 flex items-center justify-between gap-4 z-20 shrink-0">
+    <div class="flex items-center gap-3.5 min-w-0">
+      <div class="w-9 h-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
         <i class="ph-bold ph-graduation-cap"></i>
       </div>
-      <div class="min-w-0 flex items-center gap-2.5">
-        <h1 class="font-semibold text-sm tracking-tight text-zinc-900 flex items-center gap-2 truncate">
+      <div class="min-w-0 flex items-center gap-3">
+        <h1 class="font-bold text-base sm:text-lg tracking-tight text-zinc-900 flex items-center gap-2 truncate">
           VLearn Grounded Tutor
         </h1>
-        <span class="text-[11px] font-mono font-medium text-zinc-600 px-2 py-0.5 rounded-md bg-zinc-100 border border-zinc-200">
+        <span class="text-xs font-mono font-semibold text-zinc-700 px-2.5 py-1 rounded-md bg-zinc-100 border border-zinc-200">
           3A · E402
         </span>
       </div>
     </div>
 
     <!-- Right Controls -->
-    <div class="flex items-center gap-2.5 shrink-0">
+    <div class="flex items-center gap-3 shrink-0">
       <!-- Lecture Switcher -->
-      <div class="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs">
-        <i class="ph ph-book-open text-zinc-500"></i>
-        <label class="text-[11px] text-zinc-500" for="lecture">Bài:</label>
-        <select id="lecture" class="bg-transparent text-xs text-zinc-900 focus:outline-none cursor-pointer font-medium pr-1"></select>
+      <div class="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-sm shadow-xs">
+        <i class="ph ph-book-open text-zinc-600 text-base"></i>
+        <label class="text-xs text-zinc-500 font-semibold" for="lecture">Bài:</label>
+        <select id="lecture" class="bg-transparent text-sm text-zinc-900 focus:outline-none cursor-pointer font-semibold pr-1"></select>
       </div>
 
       <!-- AI Status Pill (Taxonomy Badge) -->
-      <span id="ai-status" class="text-[11px] px-2.5 py-1 rounded-md border border-zinc-200 bg-zinc-100 text-zinc-700 font-mono flex items-center gap-1.5">
-        <i class="ph ph-spinner animate-spin text-zinc-500"></i> Đang kết nối…
+      <span id="ai-status" class="text-xs px-3 py-1.5 rounded-lg border border-zinc-200 bg-zinc-100 text-zinc-800 font-mono font-medium flex items-center gap-2 shadow-xs">
+        <i class="ph ph-spinner animate-spin text-zinc-500 text-sm"></i> Đang kết nối…
       </span>
 
       <!-- Header Chat Toggle CTA -->
-      <button id="header-chat-btn" class="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-zinc-900 text-white hover:bg-zinc-800 transition shadow-sm cursor-pointer">
-        <i class="ph-bold ph-chat-teardrop-text"></i>
+      <button id="header-chat-btn" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-semibold bg-zinc-900 text-white hover:bg-zinc-800 transition shadow-sm cursor-pointer">
+        <i class="ph-bold ph-chat-teardrop-text text-base"></i>
         <span>Chat AI</span>
       </button>
     </div>
   </header>
 
   <!-- QUICK SCENARIOS BAR (Taxonomy Card Strips) -->
-  <div class="bg-zinc-50/80 border-b border-zinc-200 px-6 py-1.5 flex items-center gap-2 overflow-x-auto shrink-0 z-10 custom-scrollbar">
-    <div class="flex items-center gap-1 text-xs text-zinc-500 font-medium shrink-0 pr-1">
-      <i class="ph-bold ph-lightning text-zinc-800"></i>
+  <div class="bg-zinc-50/90 border-b border-zinc-200 px-6 py-2.5 flex items-center gap-3 overflow-x-auto shrink-0 z-10 custom-scrollbar">
+    <div class="flex items-center gap-1.5 text-sm text-zinc-800 font-bold shrink-0 pr-1">
+      <i class="ph-bold ph-lightning text-amber-500 text-base"></i>
       <span>Kịch bản K4:</span>
     </div>
     
-    <div id="scenarios" class="flex items-center gap-1.5"></div>
+    <div id="scenarios" class="flex items-center gap-2"></div>
 
-    <button id="random-turn" class="shrink-0 text-xs px-2.5 py-1 rounded-md font-medium text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-200 flex items-center gap-1.5 shadow-sm transition">
-      <i class="ph-bold ph-shuffle text-zinc-500"></i> Lượt K4 ngẫu nhiên
+    <button id="random-turn" class="shrink-0 text-sm px-3.5 py-1.5 rounded-lg font-semibold text-zinc-800 bg-white hover:bg-zinc-100 border border-zinc-300 flex items-center gap-2 shadow-xs transition cursor-pointer">
+      <i class="ph-bold ph-shuffle text-zinc-600 text-base"></i> Lượt K4 ngẫu nhiên
     </button>
   </div>
 
@@ -254,24 +285,24 @@
   <main class="flex-1 flex flex-col min-h-0 bg-[#fafafa] relative">
 
     <!-- Workspace Tabs (Taxonomy / shadcn-ui Tabs style) -->
-    <div class="bg-[#fafafa] border-b border-zinc-200 px-6 pt-2 flex items-center justify-between shrink-0">
-      <div class="inline-flex h-9 items-center justify-center rounded-lg bg-zinc-100 p-1 text-zinc-600 border border-zinc-200/80 text-xs">
-        <button data-tab="slide" class="tab px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all text-zinc-900 bg-white shadow-sm">
-          <i class="ph ph-presentation-chart text-zinc-700"></i>
+    <div class="bg-[#fafafa] border-b border-zinc-200 px-6 pt-2.5 flex items-center justify-between shrink-0">
+      <div class="inline-flex h-11 items-center justify-center rounded-xl bg-zinc-100 p-1 text-zinc-600 border border-zinc-200/80 text-sm">
+        <button data-tab="slide" class="tab px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all text-zinc-900 bg-white shadow-sm cursor-pointer">
+          <i class="ph ph-presentation-chart text-zinc-800 text-base"></i>
           <span>Slide Bài Giảng</span>
         </button>
-        <button data-tab="transcript" class="tab px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all hover:text-zinc-900">
-          <i class="ph ph-waveform text-zinc-500"></i>
+        <button data-tab="transcript" class="tab px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all hover:text-zinc-900 cursor-pointer">
+          <i class="ph ph-waveform text-zinc-500 text-base"></i>
           <span>Transcript</span>
         </button>
-        <button data-tab="compare" class="tab px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all hover:text-zinc-900">
-          <i class="ph ph-git-diff text-zinc-500"></i>
+        <button data-tab="compare" class="tab px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all hover:text-zinc-900 cursor-pointer">
+          <i class="ph ph-git-diff text-zinc-500 text-base"></i>
           <span>So Sánh Đối Chiếu</span>
         </button>
-        <button data-tab="evidence" class="tab px-3 py-1 rounded-md font-medium flex items-center gap-1.5 transition-all hover:text-zinc-900">
-          <i class="ph ph-check-circle text-zinc-500"></i>
+        <button data-tab="evidence" class="tab px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all hover:text-zinc-900 cursor-pointer">
+          <i class="ph ph-check-circle text-zinc-500 text-base"></i>
           <span>Căn Cứ Đã Tra</span>
-          <span id="evidence-count" class="text-zinc-400 font-mono text-[10px]"></span>
+          <span id="evidence-count" class="text-zinc-500 font-mono text-xs font-semibold"></span>
         </button>
       </div>
     </div>
@@ -280,36 +311,51 @@
     <div id="panel-slide" class="panel flex-1 flex flex-col min-h-0 overflow-hidden">
       
       <!-- Toolbar -->
-      <div class="px-6 py-2 bg-white border-b border-zinc-200 flex items-center justify-between text-xs shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-md px-2 py-0.5">
-            <span class="text-zinc-500 text-[11px]">Tập tin:</span>
-            <select id="deck" class="bg-transparent text-zinc-800 focus:outline-none cursor-pointer font-medium text-xs"></select>
+      <div class="px-6 py-2.5 bg-white border-b border-zinc-200 flex items-center justify-between text-sm shrink-0">
+        <div class="flex items-center gap-3.5">
+          <div class="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 shadow-xs">
+            <span class="text-zinc-500 text-xs font-semibold">Tập tin:</span>
+            <select id="deck" class="bg-transparent text-zinc-800 focus:outline-none cursor-pointer font-semibold text-sm"></select>
           </div>
 
-          <div class="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-md px-2.5 py-0.5 font-mono text-xs text-zinc-700">
-            <span>Trang</span>
-            <input id="page-input" type="number" min="1" class="w-9 text-center bg-white border border-zinc-200 rounded text-zinc-900 font-bold py-0.5 focus:outline-none focus:border-zinc-400">
-            <span class="text-zinc-400">/</span>
-            <span id="page-count" class="text-zinc-600 font-medium">–</span>
+          <div class="flex items-center gap-2.5 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 font-mono text-sm text-zinc-700 shadow-xs">
+            <span class="font-medium">Trang</span>
+            <input id="page-input" type="number" min="1" class="w-12 text-center bg-white border border-zinc-200 rounded-md text-zinc-900 font-bold py-1 text-sm focus:outline-none focus:border-zinc-400">
+            <span class="text-zinc-400 font-medium">/</span>
+            <span id="page-count" class="text-zinc-700 font-bold">–</span>
           </div>
         </div>
 
         <!-- Top Right Mini Buttons -->
-        <div class="flex items-center gap-1.5">
-          <button id="prev-page" class="px-2.5 py-1 bg-white hover:bg-zinc-50 border border-zinc-200 rounded-md text-xs text-zinc-700 transition flex items-center gap-1 font-medium shadow-sm disabled:opacity-40">
-            <i class="ph ph-caret-left"></i> Trước
+        <div class="flex items-center gap-2.5">
+          <!-- Pin Mode Toggle Button -->
+          <button id="btn-toggle-pin" title="Bật/tắt chế độ khoanh vùng hỏi AI trực tiếp trên slide" class="px-3.5 py-1.5 bg-white hover:bg-blue-50/60 border border-zinc-300 hover:border-blue-400 rounded-lg text-sm text-zinc-800 hover:text-blue-700 transition flex items-center gap-2 font-semibold shadow-xs cursor-pointer">
+            <i class="ph-bold ph-crosshair text-blue-600 text-base"></i>
+            <span>Khoanh vùng hỏi AI</span>
           </button>
-          <button id="next-page" class="px-2.5 py-1 bg-white hover:bg-zinc-50 border border-zinc-200 rounded-md text-xs text-zinc-700 transition flex items-center gap-1 font-medium shadow-sm disabled:opacity-40">
-            Sau <i class="ph ph-caret-right"></i>
+
+          <button id="prev-page" class="px-3 py-1.5 bg-white hover:bg-zinc-100 border border-zinc-200 rounded-lg text-sm text-zinc-800 transition flex items-center gap-1.5 font-semibold shadow-xs disabled:opacity-40 cursor-pointer">
+            <i class="ph-bold ph-caret-left"></i> Trước
+          </button>
+          <button id="next-page" class="px-3 py-1.5 bg-white hover:bg-zinc-100 border border-zinc-200 rounded-lg text-sm text-zinc-800 transition flex items-center gap-1.5 font-semibold shadow-xs disabled:opacity-40 cursor-pointer">
+            Sau <i class="ph-bold ph-caret-right"></i>
           </button>
         </div>
       </div>
 
       <!-- Quote banner if active -->
-      <div id="slide-quote" class="hidden px-6 py-2 bg-amber-50/80 border-b border-amber-200 text-xs text-amber-900 shrink-0 flex items-center gap-2">
-        <i class="ph-bold ph-quotes text-amber-600 text-sm"></i>
+      <div id="slide-quote" class="hidden px-6 py-2.5 bg-amber-50 border-b border-amber-200 text-sm text-amber-900 shrink-0 flex items-center gap-2.5 font-medium">
+        <i class="ph-bold ph-quotes text-amber-600 text-base shrink-0"></i>
         <span></span>
+      </div>
+
+      <!-- Pin helper hint banner when active -->
+      <div id="pin-hint-bar" class="hidden px-6 py-2 bg-blue-50 border-b border-blue-200 text-sm text-blue-900 shrink-0 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i class="ph-bold ph-crosshair text-blue-600 text-base shrink-0"></i>
+          <span><strong>Chế độ khoanh vùng đang bật:</strong> Nhấn giữ chuột và kéo một khung bao quanh chữ, hình vẽ hoặc công thức bạn muốn hỏi.</span>
+        </div>
+        <button id="pin-hint-close" class="text-blue-700 hover:text-blue-900 font-semibold text-xs underline cursor-pointer">Tắt chế độ</button>
       </div>
 
       <!-- Slide Canvas Stage (STRICTLY NO SCROLL, CONTAIN FIT & PROMINENT ARROWS) -->
@@ -317,18 +363,60 @@
         
         <!-- Large Floating Left Navigation Arrow -->
         <button id="slide-arrow-prev" title="Trang trước (←)" aria-label="Trang trước"
-          class="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white text-zinc-700 hover:text-zinc-950 border border-zinc-200 shadow-md flex items-center justify-center text-lg sm:text-xl transition-all hover:scale-105 z-20 backdrop-blur-md group cursor-pointer disabled:opacity-30 disabled:pointer-events-none">
+          class="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/95 hover:bg-white text-zinc-700 hover:text-zinc-950 border-2 border-zinc-200 shadow-xl flex items-center justify-center text-xl sm:text-2xl transition-all hover:scale-105 z-20 backdrop-blur-md group cursor-pointer disabled:opacity-30 disabled:pointer-events-none">
           <i class="ph-bold ph-caret-left group-hover:-translate-x-0.5 transition-transform"></i>
         </button>
 
-        <!-- Slide Frame containing canvas -->
-        <div id="slide-frame" class="rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden flex items-center justify-center">
-          <canvas id="slide-canvas" class="block"></canvas>
+        <!-- Slide Frame containing canvas & interactive overlay -->
+        <div id="slide-frame" class="rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden flex items-center justify-center relative min-h-[420px] p-2">
+          <div id="slide-canvas-wrapper" class="relative inline-block leading-none max-w-full">
+            <canvas id="slide-canvas" class="block rounded shadow-sm"></canvas>
+
+            <!-- Interactive Selection & Spotlight Layer -->
+            <div id="slide-overlay" class="absolute inset-0 z-10 pointer-events-none">
+              <!-- Active Selection Box while dragging -->
+              <div id="pin-drag-box" class="hidden absolute border-2 border-dashed border-blue-500 bg-blue-500/15 rounded pointer-events-none"></div>
+
+              <!-- Spotlight Highlight Box -->
+              <div id="pin-spotlight-box" class="hidden absolute border-2 border-blue-500 bg-blue-500/10 rounded-lg shadow-[0_0_25px_rgba(59,130,246,0.6)] pointer-events-none transition-all"></div>
+
+              <!-- Exact Quote Line / Sentence Highlight Box with Floating Badge -->
+              <div id="quote-line-highlight" class="hidden absolute border-2 border-amber-500 bg-amber-400/30 rounded-lg shadow-[0_0_25px_rgba(245,158,11,0.7)] pointer-events-none transition-all duration-300 z-20">
+                <div class="absolute -top-7 left-1 flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500 text-white text-[11px] font-bold shadow-md whitespace-nowrap">
+                  <span>✨ Đoạn AI lấy làm căn cứ</span>
+                </div>
+              </div>
+
+              <!-- Smart Floating Pin Card Popover -->
+              <div id="smart-pin-card" class="hidden absolute z-30 w-80 sm:w-96 bg-white/98 backdrop-blur-md rounded-xl border border-zinc-200 p-4 shadow-2xl text-sm space-y-3 pointer-events-auto transition-all">
+                <div class="flex items-center justify-between border-b border-zinc-100 pb-2.5">
+                  <div class="flex items-center gap-2 font-bold text-zinc-900 min-w-0">
+                    <span class="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-sm shrink-0">📌</span>
+                    <span id="pin-card-title" class="truncate font-semibold text-sm text-zinc-900">Trọng tâm chọn</span>
+                  </div>
+                  <button id="pin-card-close" class="text-zinc-400 hover:text-zinc-700 p-1 rounded-md transition cursor-pointer" title="Đóng ghim">
+                    <i class="ph-bold ph-x text-sm"></i>
+                  </button>
+                </div>
+                <div id="pin-card-body" class="text-zinc-700 leading-relaxed text-sm max-h-56 overflow-y-auto custom-scrollbar">
+                  <div class="flex items-center gap-2 text-zinc-500 py-2">
+                    <i class="ph ph-spinner animate-spin text-blue-600 text-base"></i> Đang phân tích vùng chọn...
+                  </div>
+                </div>
+                <div id="pin-card-footer" class="pt-2 border-t border-zinc-100 flex items-center justify-between text-xs">
+                  <span id="pin-card-cite" class="font-mono text-blue-600 font-semibold truncate max-w-[160px]"></span>
+                  <button id="pin-card-ask-more" class="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1.5 transition cursor-pointer text-sm">
+                    <span>Hỏi sâu hơn</span> <i class="ph-bold ph-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Large Floating Right Navigation Arrow -->
         <button id="slide-arrow-next" title="Trang sau (→)" aria-label="Trang sau"
-          class="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white text-zinc-700 hover:text-zinc-950 border border-zinc-200 shadow-md flex items-center justify-center text-lg sm:text-xl transition-all hover:scale-105 z-20 backdrop-blur-md group cursor-pointer disabled:opacity-30 disabled:pointer-events-none">
+          class="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/95 hover:bg-white text-zinc-700 hover:text-zinc-950 border-2 border-zinc-200 shadow-xl flex items-center justify-center text-xl sm:text-2xl transition-all hover:scale-105 z-20 backdrop-blur-md group cursor-pointer disabled:opacity-30 disabled:pointer-events-none">
           <i class="ph-bold ph-caret-right group-hover:translate-x-0.5 transition-transform"></i>
         </button>
 
@@ -338,13 +426,13 @@
     <!-- TAB 2: TRANSCRIPT VIEWER -->
     <div id="panel-transcript" class="panel hidden flex-1 flex flex-col min-h-0">
       <div class="px-6 py-2.5 bg-white border-b border-zinc-200 flex items-center gap-3 shrink-0">
-        <div class="flex-1 min-w-0 flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1">
-          <i class="ph ph-waveform text-zinc-500"></i>
-          <select id="transcript-file" class="bg-transparent text-zinc-800 focus:outline-none text-xs w-full cursor-pointer font-medium"></select>
+        <div class="flex-1 min-w-0 flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5">
+          <i class="ph ph-waveform text-zinc-500 text-base"></i>
+          <select id="transcript-file" class="bg-transparent text-zinc-800 focus:outline-none text-sm w-full cursor-pointer font-semibold"></select>
         </div>
-        <div class="w-72 relative">
-          <i class="ph ph-magnifying-glass absolute left-3 top-2 text-zinc-400"></i>
-          <input id="transcript-filter" type="search" placeholder="Tìm đoạn transcript..." class="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-8 pr-3 py-1 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition">
+        <div class="w-80 relative">
+          <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-zinc-400 text-base"></i>
+          <input id="transcript-filter" type="search" placeholder="Tìm đoạn transcript..." class="w-full bg-zinc-50 border border-zinc-200 rounded-lg pl-9 pr-3 py-1.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition">
         </div>
       </div>
 
@@ -355,42 +443,42 @@
     <div id="panel-compare" class="panel hidden flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar p-6 bg-[#fafafa]">
       <div class="max-w-6xl mx-auto w-full space-y-6">
         
-        <div class="bg-white rounded-xl p-4 border border-zinc-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="bg-white rounded-xl p-5 border border-zinc-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 class="text-sm font-semibold text-zinc-900 flex items-center gap-2">
-              <i class="ph-bold ph-git-diff text-zinc-800"></i>
-              Bảng So Sánh Đối Chiếu & Kiểm Thử CP3 (Golden Set)
+            <h2 class="text-base sm:text-lg font-bold text-zinc-900 flex items-center gap-2">
+              <i class="ph-bold ph-git-diff text-zinc-800 text-xl"></i>
+              Bảng So Sánh Đối Chiếu &amp; Kiểm Thử CP3 (Golden Set)
             </h2>
-            <p class="text-xs text-zinc-500 mt-0.5">
+            <p class="text-sm text-zinc-500 mt-1">
               So sánh câu trả lời của tutor cũ với AI Grounded Tutor; đối chiếu bộ thước đo 20 ca kiểm thử định lượng CP3.
             </p>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <span id="cp3-summary-badge" class="text-xs px-2.5 py-1 rounded-md bg-zinc-50 text-zinc-600 border border-zinc-200 font-mono font-medium flex items-center gap-1.5 shadow-xs" title="Số đo lượt chạy gần nhất (eval/results.json, do eval/run_eval.py ghi)">
-              <i class="ph ph-hourglass"></i> Đang tải số đo…
+          <div class="flex items-center gap-2.5 shrink-0">
+            <span id="cp3-summary-badge" class="text-xs px-3 py-1.5 rounded-lg bg-zinc-50 text-zinc-700 border border-zinc-200 font-mono font-semibold flex items-center gap-1.5 shadow-xs" title="Số đo lượt chạy gần nhất (eval/results.json, do eval/run_eval.py ghi)">
+              <i class="ph ph-hourglass text-sm"></i> Đang tải số đo…
             </span>
-            <span class="text-xs px-2.5 py-1 rounded-md bg-zinc-100 text-zinc-800 border border-zinc-200 font-mono font-medium">
+            <span class="text-xs px-3 py-1.5 rounded-lg bg-zinc-100 text-zinc-900 border border-zinc-200 font-mono font-bold shadow-xs">
               Grounded Mode
             </span>
           </div>
         </div>
 
         <!-- Golden Set Test Case Selector Bar -->
-        <div class="bg-white rounded-xl p-3.5 border border-zinc-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
-          <div class="flex items-center gap-2.5 flex-1 min-w-0 w-full md:w-auto">
-            <span class="px-2 py-0.5 bg-zinc-900 text-white rounded font-mono text-[11px] font-medium shrink-0">
+        <div class="bg-white rounded-xl p-4 border border-zinc-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-sm">
+          <div class="flex items-center gap-3 flex-1 min-w-0 w-full md:w-auto">
+            <span class="px-2.5 py-1 bg-zinc-900 text-white rounded-md font-mono text-xs font-semibold shrink-0">
               Golden Set CP3
             </span>
-            <select id="golden-set-select" class="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-zinc-900 font-medium focus:outline-none focus:border-zinc-400 cursor-pointer flex-1 min-w-0 text-xs">
+            <select id="golden-set-select" class="bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-zinc-900 font-semibold focus:outline-none focus:border-zinc-400 cursor-pointer flex-1 min-w-0 text-sm">
               <option value="">-- Chọn 1 trong 20 ca kiểm thử Golden Set để đối chiếu --</option>
             </select>
           </div>
 
-          <div class="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end">
-            <span id="golden-meta-layer" class="hidden px-2 py-0.5 rounded font-mono text-[11px] bg-zinc-100 text-zinc-700 border border-zinc-200"></span>
-            <span id="golden-meta-result" class="hidden px-2 py-0.5 rounded font-mono text-[11px] font-semibold border"></span>
-            <button id="golden-run-btn" class="hidden px-3 py-1 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-medium text-xs items-center gap-1.5 shadow-sm transition cursor-pointer">
-              <i class="ph-bold ph-play"></i> Thử với AI thật
+          <div class="flex items-center gap-2.5 shrink-0 w-full md:w-auto justify-end">
+            <span id="golden-meta-layer" class="hidden px-2.5 py-1 rounded-md font-mono text-xs font-semibold bg-zinc-100 text-zinc-700 border border-zinc-200"></span>
+            <span id="golden-meta-result" class="hidden px-2.5 py-1 rounded-md font-mono text-xs font-bold border"></span>
+            <button id="golden-run-btn" class="hidden px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-semibold text-sm items-center gap-2 shadow-sm transition cursor-pointer">
+              <i class="ph-bold ph-play text-base"></i> Thử với AI thật
             </button>
           </div>
         </div>
@@ -400,26 +488,26 @@
           
           <!-- Column 1: Input Question & Old Tutor Reply -->
           <div class="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden flex flex-col">
-            <div class="bg-zinc-50 px-4 py-2 border-b border-zinc-200 flex items-center justify-between text-xs">
-              <div class="flex items-center gap-2 text-zinc-600 font-mono font-medium">
-                <i class="ph ph-file-text"></i> tutor_cu.md
+            <div class="bg-zinc-50 px-4 py-2.5 border-b border-zinc-200 flex items-center justify-between text-sm">
+              <div class="flex items-center gap-2 text-zinc-700 font-mono font-semibold">
+                <i class="ph ph-file-text text-base"></i> tutor_cu.md
               </div>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 font-medium">
+              <span class="text-xs font-mono px-2.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 font-semibold">
                 Chưa có căn cứ
               </span>
             </div>
 
-            <div class="p-4 flex-1 flex flex-col space-y-3">
+            <div class="p-5 flex-1 flex flex-col space-y-4">
               <div>
-                <label class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Câu hỏi của học viên:</label>
-                <div id="compare-question" class="mt-1 text-xs text-zinc-800 bg-zinc-50 border border-zinc-200 rounded-lg p-3 font-mono leading-relaxed">
+                <label class="text-xs font-mono text-zinc-500 uppercase tracking-wider font-semibold">Câu hỏi của học viên:</label>
+                <div id="compare-question" class="mt-1.5 text-sm text-zinc-800 bg-zinc-50 border border-zinc-200 rounded-lg p-3.5 font-mono leading-relaxed">
                   (Chưa có dữ liệu. Chọn một kịch bản K4 phía trên để xem.)
                 </div>
               </div>
 
               <div class="flex-1">
-                <label class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Câu trả lời cũ:</label>
-                <div id="compare-old-reply" class="mt-1 text-xs text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-lg p-3 leading-relaxed min-h-[160px] whitespace-pre-line font-sans">
+                <label class="text-xs font-mono text-zinc-500 uppercase tracking-wider font-semibold">Câu trả lời cũ:</label>
+                <div id="compare-old-reply" class="mt-1.5 text-sm text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-lg p-3.5 leading-relaxed min-h-[160px] whitespace-pre-line font-sans">
                   Chọn một lượt câu hỏi từ thanh kịch bản K4 để xem câu trả lời cũ của tutor.
                 </div>
               </div>
@@ -428,34 +516,34 @@
 
           <!-- Column 2: Grounded Tutor Output with Citations -->
           <div class="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden flex flex-col">
-            <div class="bg-zinc-50 px-4 py-2 border-b border-zinc-200 flex items-center justify-between text-xs">
-              <div class="flex items-center gap-2 text-zinc-900 font-mono font-medium">
-                <i class="ph ph-sparkle text-zinc-700"></i> grounded_tutor.md
+            <div class="bg-zinc-50 px-4 py-2.5 border-b border-zinc-200 flex items-center justify-between text-sm">
+              <div class="flex items-center gap-2 text-zinc-900 font-mono font-semibold">
+                <i class="ph-bold ph-sparkle text-zinc-800 text-base"></i> grounded_tutor.md
               </div>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+              <span class="text-xs font-mono px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
                 Xác thực nguồn
               </span>
             </div>
 
-            <div class="p-4 flex-1 flex flex-col space-y-3">
+            <div class="p-5 flex-1 flex flex-col space-y-4">
               <div>
-                <label class="text-[11px] font-mono text-zinc-600 uppercase tracking-wider flex items-center justify-between">
+                <label class="text-xs font-mono text-zinc-600 uppercase tracking-wider flex items-center justify-between font-semibold">
                   <span>Trạng thái:</span>
                   <span id="compare-status-badge" class="font-normal font-sans">--</span>
                 </label>
-                <div id="compare-ai-reply" class="mt-1 text-xs text-zinc-800 bg-zinc-50/50 border border-zinc-200 rounded-lg p-3.5 leading-relaxed min-h-[160px]">
+                <div id="compare-ai-reply" class="mt-1.5 text-sm text-zinc-800 bg-zinc-50/60 border border-zinc-200 rounded-lg p-4 leading-relaxed min-h-[160px]">
                   Câu trả lời mới kèm trích dẫn bấm được sẽ hiển thị tại đây khi hỏi AI.
                 </div>
               </div>
 
               <div>
-                <label class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">Mã nguồn được dẫn:</label>
-                <div id="compare-citations" class="mt-1 flex flex-wrap gap-1.5">
-                  <span class="text-xs text-zinc-400">Chưa có trích dẫn</span>
+                <label class="text-xs font-mono text-zinc-500 uppercase tracking-wider font-semibold">Mã nguồn được dẫn:</label>
+                <div id="compare-citations" class="mt-1.5 flex flex-wrap gap-2">
+                  <span class="text-sm text-zinc-400">Chưa có trích dẫn</span>
                 </div>
               </div>
 
-              <div class="pt-2 border-t border-zinc-200 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
+              <div class="pt-2.5 border-t border-zinc-200 flex items-center justify-between text-xs text-zinc-500 font-mono">
                 <span id="compare-model">Model: --</span>
                 <span id="compare-latency">Độ trễ: --</span>
               </div>
@@ -470,7 +558,7 @@
     <!-- TAB 4: EVIDENCE / CĂN CỨ -->
     <div id="panel-evidence" class="panel hidden flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#fafafa]">
       <div class="max-w-4xl mx-auto">
-        <p class="text-zinc-500 text-xs mb-4">Chưa có lượt hỏi nào. Sau mỗi câu trả lời, tab này liệt kê các đoạn tài liệu mà trợ giảng đã tra qua BM25, đoạn nào được dẫn và điểm số liên quan.</p>
+        <p class="text-zinc-500 text-sm mb-4">Chưa có lượt hỏi nào. Sau mỗi câu trả lời, tab này liệt kê các đoạn tài liệu mà trợ giảng đã tra qua BM25, đoạn nào được dẫn và điểm số liên quan.</p>
       </div>
     </div>
 
@@ -481,68 +569,68 @@
   <!-- ========================================================================================= -->
 
   <!-- Floating Launcher Button -->
-  <div id="chatbot-launcher-container" class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5">
-    <div id="chatbot-hint" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-zinc-200 text-zinc-700 text-xs shadow-md backdrop-blur-md cursor-pointer hover:border-zinc-300 transition">
-      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-      <span class="font-medium">Hỏi Trợ giảng AI</span>
+  <div id="chatbot-launcher-container" class="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+    <div id="chatbot-hint" class="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-zinc-200 text-zinc-800 text-sm shadow-lg backdrop-blur-md cursor-pointer hover:border-zinc-400 transition font-medium">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span>Hỏi Trợ giảng AI</span>
     </div>
 
-    <button id="chatbot-toggle-btn" class="w-12 h-12 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white shadow-xl shadow-zinc-900/25 border border-zinc-800 flex items-center justify-center text-lg transition-all hover:scale-105 cursor-pointer" title="Mở khung chat trợ giảng">
+    <button id="chatbot-toggle-btn" class="w-14 h-14 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white shadow-xl shadow-zinc-900/30 border border-zinc-800 flex items-center justify-center text-2xl transition-all hover:scale-105 cursor-pointer" title="Mở khung chat trợ giảng">
       <i class="ph-bold ph-chat-teardrop-text"></i>
     </button>
   </div>
 
   <!-- Floating Chat Window (Taxonomy Dialog / Card Style) -->
-  <div id="chat-panel" class="chat-closed fixed bottom-20 right-6 w-[440px] max-w-[calc(100vw-2rem)] h-[580px] max-h-[calc(100vh-7rem)] z-50 flex flex-col rounded-2xl border border-zinc-200 bg-white/98 backdrop-blur-md shadow-2xl overflow-hidden">
+  <div id="chat-panel" class="chat-closed fixed bottom-24 right-6 w-[460px] max-w-[calc(100vw-2rem)] h-[620px] max-h-[calc(100vh-7rem)] z-50 flex flex-col rounded-2xl border border-zinc-200 bg-white/98 backdrop-blur-md shadow-2xl overflow-hidden">
     
     <!-- Chat Header -->
-    <div class="p-3.5 border-b border-zinc-200 bg-zinc-50/80 flex items-center justify-between shrink-0">
-      <div class="flex items-center gap-2.5">
-        <div class="w-7 h-7 rounded-md bg-zinc-900 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+    <div class="p-4 border-b border-zinc-200 bg-zinc-50/90 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-sm shadow-sm">
           <i class="ph-bold ph-robot"></i>
         </div>
         <div>
-          <div class="font-medium text-xs text-zinc-900 flex items-center gap-1.5">
+          <div class="font-bold text-sm text-zinc-900 flex items-center gap-2">
             Trợ Giảng VLearn
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
           </div>
-          <p class="text-[10.5px] text-zinc-500">Chỉ trả lời có căn cứ từ bài học</p>
+          <p class="text-xs text-zinc-500">Chỉ trả lời có căn cứ từ bài học</p>
         </div>
       </div>
 
       <!-- Action buttons -->
-      <div class="flex items-center gap-1 text-zinc-400">
-        <button id="reset-chat" title="Làm mới chat" class="w-7 h-7 rounded-md hover:bg-zinc-200 hover:text-zinc-800 flex items-center justify-center text-xs transition">
-          <i class="ph ph-arrow-counter-clockwise"></i>
+      <div class="flex items-center gap-1.5 text-zinc-500">
+        <button id="reset-chat" title="Làm mới chat" class="w-8 h-8 rounded-lg hover:bg-zinc-200 hover:text-zinc-900 flex items-center justify-center text-sm transition cursor-pointer">
+          <i class="ph-bold ph-arrow-counter-clockwise"></i>
         </button>
-        <button id="chat-expand-btn" title="Mở rộng / Thu nhỏ" class="w-7 h-7 rounded-md hover:bg-zinc-200 hover:text-zinc-800 flex items-center justify-center text-xs transition">
-          <i class="ph ph-arrows-out-simple"></i>
+        <button id="chat-expand-btn" title="Mở rộng / Thu nhỏ" class="w-8 h-8 rounded-lg hover:bg-zinc-200 hover:text-zinc-900 flex items-center justify-center text-sm transition cursor-pointer">
+          <i class="ph-bold ph-arrows-out-simple"></i>
         </button>
-        <button id="chat-close-btn" title="Đóng chat" class="w-7 h-7 rounded-md hover:bg-zinc-200 hover:text-zinc-800 flex items-center justify-center text-xs transition">
+        <button id="chat-close-btn" title="Đóng chat" class="w-8 h-8 rounded-lg hover:bg-zinc-200 hover:text-zinc-900 flex items-center justify-center text-sm transition cursor-pointer">
           <i class="ph-bold ph-x"></i>
         </button>
       </div>
     </div>
 
     <!-- Chat Messages Container -->
-    <div id="chat-messages" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-3.5 bg-white"></div>
+    <div id="chat-messages" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-4 bg-white"></div>
 
     <!-- Section Context & Suggestions -->
-    <div class="px-3.5 py-2 bg-zinc-50 border-t border-zinc-200 shrink-0 space-y-2">
-      <div class="flex items-center gap-2">
-        <label for="section" class="text-[10px] font-mono text-zinc-500 shrink-0 uppercase">Phần học:</label>
-        <select id="section" class="text-xs bg-white text-zinc-800 border border-zinc-200 rounded-md px-2 py-0.5 flex-1 min-w-0 focus:outline-none focus:border-zinc-400"></select>
+    <div class="px-4 py-2.5 bg-zinc-50 border-t border-zinc-200 shrink-0 space-y-2">
+      <div class="flex items-center gap-2.5">
+        <label for="section" class="text-xs font-mono text-zinc-500 shrink-0 uppercase font-semibold">Phần học:</label>
+        <select id="section" class="text-sm bg-white text-zinc-800 border border-zinc-200 rounded-md px-2.5 py-1 flex-1 min-w-0 focus:outline-none focus:border-zinc-400 font-medium"></select>
       </div>
-      <div id="suggestions" class="flex flex-wrap gap-1.5"></div>
+      <div id="suggestions" class="flex flex-wrap gap-2"></div>
     </div>
 
     <!-- Ask Input Form (Taxonomy Input Style) -->
-    <div class="p-3 bg-white border-t border-zinc-200 shrink-0">
-      <form id="ask-form" class="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-1.5 focus-within:border-zinc-400 focus-within:bg-white transition">
+    <div class="p-3.5 bg-white border-t border-zinc-200 shrink-0">
+      <form id="ask-form" class="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2 focus-within:border-zinc-400 focus-within:bg-white transition">
         <input type="text" id="user-input" autocomplete="off" maxlength="1000"
           placeholder="Đặt câu hỏi về nội dung bài giảng..."
-          class="flex-1 text-xs bg-transparent text-zinc-900 placeholder-zinc-400 focus:outline-none" />
-        <button type="submit" id="send-btn" class="w-7 h-7 rounded-lg bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-white flex items-center justify-center text-xs transition shrink-0 cursor-pointer shadow-sm" title="Gửi câu hỏi">
+          class="flex-1 text-sm bg-transparent text-zinc-900 placeholder-zinc-400 focus:outline-none" />
+        <button type="submit" id="send-btn" class="w-9 h-9 rounded-lg bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-white flex items-center justify-center text-base transition shrink-0 cursor-pointer shadow-sm" title="Gửi câu hỏi">
           <i class="ph-bold ph-arrow-up"></i>
         </button>
       </form>
@@ -550,7 +638,7 @@
   </div>
 
   <!-- Toast Notification -->
-  <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 border border-zinc-800 text-white text-xs px-3.5 py-1.5 rounded-lg shadow-xl z-50 font-medium"></div>
+  <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 border border-zinc-800 text-white text-sm px-4 py-2 rounded-xl shadow-2xl z-50 font-medium"></div>
 
   <script src="app.js"></script>
 </body>

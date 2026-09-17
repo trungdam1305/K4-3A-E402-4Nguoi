@@ -5,8 +5,8 @@ import unicodedata
 from collections import Counter
 
 STOPWORDS = set("""
-là của và các có được cho trong này đó một những thì mà với để không cũng như khi đã sẽ ra vào lại
-nào gì sao thế bạn mình em anh chị tôi ạ nhé nhỉ ơi đi rồi hãy giúp về từ theo nên hay hoặc ở đây
+là của và các có được cho trong này đó một những thì mà với để cũng như khi đã sẽ ra vào lại
+nào gì sao thế bạn mình em anh chị tôi ạ nhé nhỉ ơi đi rồi hãy giúp về từ theo hay hoặc ở đây
 cái việc phần kia ấy vậy nữa thôi đang tại
 the a an of to is are was what how why in on for and or be it this that do does
 """.split())
@@ -22,6 +22,8 @@ STOPWORDS |= {strip_accents(w) for w in STOPWORDS}
 
 
 def tokenize(text: str) -> list[str]:
+    # Giữ các thuật ngữ kỹ thuật có gạch nối như top-p, top-k, rule-based, few-shot
+    text = re.sub(r"(?<=[a-zA-Z0-9])-(?=[a-zA-Z0-9])", "_", text)
     words = re.findall(r"\w+", unicodedata.normalize("NFC", text.lower()))
     terms, prev = [], None
     for w in words:

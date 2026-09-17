@@ -8,7 +8,7 @@
 
 |Đàm Quang Trung  |2A202602525  |Leader  |  |
 
-|Thái Hữu Tuấn  |2A202602465  |  |  |
+|Thái Hữu Tuấn  |2A202602465  |Evaluation & Grounding Reviewer  |Chấm độc lập case khó, kiểm citation đúng ngữ cảnh, đối chiếu quality bar  |
 
 |Võ Minh Quân  |2A202602429  |  |  |
 

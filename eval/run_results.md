@@ -1,104 +1,80 @@
-# Báo Cáo Đo Lường & Kết Quả Kiểm Thử Sơ Bộ (CP3) — Run 1
+# Kết quả kiểm thử Golden Set
 
-> **Dự án:** VLearn Grounded Tutor — Lớp 3A · Phòng E402 · Track A  
-> **Thời điểm thực hiện:** 17/09/2026  
-> **Mục tiêu:** Thiết lập bộ thước đo định lượng độc lập (Golden Set 20 ca) và đo lường khách quan năng lực xử lý của Prototype AI thật tại mốc CP3.
+Bảng dưới do `eval/run_eval.py` tự ghi sau mỗi lượt chạy (không sửa tay). Chi tiết từng lượt, gồm câu trả lời và lý do, nằm trong `eval/runs/<thời điểm>.json`. Bản mới nhất được chép ra `eval/results.json`.
 
----
+## Lượt chạy gần nhất
 
-## 1. Tóm Tắt Số Đo Thực Nghiệm (Executive Summary)
+<!-- AUTO:START -->
+_Tự sinh bởi `eval/run_eval.py` — lượt **Run 1 (CP3)**, 2026-09-17T14:03:51, commit `bda4488`, golden set sha1 `0b45375eac`._
 
-Tuân thủ **nguyên tắc trung thực trong số đo kiểm thử** của Hackathon, nhóm không làm đẹp số liệu hay gán cứng kết quả. Tất cả 20 ca đều được chạy tự động qua pipeline xử lý thật: tách ngữ cảnh VLearn $\rightarrow$ tra cứu BM25 (slide & transcript) $\rightarrow$ gọi mô hình LLM (`gpt-4.1-mini` với fallback `gpt-4o-mini`) $\rightarrow$ kiểm duyệt trích dẫn và áp dụng luật cứng nghiệp vụ.
+| Thước đo | Kết quả |
+|---|---|
+| Số ca | 20 |
+| Đạt | **17/20 (85.0%)** |
+| Model trả lời | gpt-4.1-mini-2025-04-14 |
+| Độ trễ trung vị / lượt | 2415 ms |
+| Mã nguồn bịa bị bộ kiểm gỡ | 1 |
+| Lỗi gọi AI | 0 |
 
-| Chỉ số đo lường | Kết quả Lượt 1 (Run 1) | Ghi chú / Tiêu chuẩn |
-|---|---|---|
-| **Tổng số ca kiểm thử (Golden Set)** | **20 ca** | Đạt chuẩn $\ge 20$ ca độc lập |
-| **Số ca trích trực tiếp từ chatlog thật K4** | **14 / 20 ca (70%)** | Vượt yêu cầu tối thiểu 10 ca từ dữ liệu thật |
-| **Số ca đạt chuẩn nghiệm thu (Passed)** | **15 ca** | Đáp ứng đúng trạng thái & trích dẫn |
-| **Số ca thất bại / sai lệch (Failed)** | **5 ca** | Được ghi nhận và mổ xẻ nguyên nhân chi tiết |
-| **TỶ LỆ ĐẠT CHUẨN (PASS RATE)** | **75.0% (15/20)** | **Số đo thực nghiệm sơ bộ CP3** |
-| **Độ trễ trung bình (Latency)** | **2.45 giây / lượt** | BM25: ~4ms · Gọi LLM: ~2.4s |
-| **Tỷ lệ gỡ mã nguồn bịa (Anti-Hallucination)** | **100% (2/2 ca bịa bị triệt tiêu)** | Không có mã nguồn ảo lọt vào câu trả lời |
+| Lớp chỗ khó | Đạt |
+|---|---|
+| ① Nguồn sự thật | 11/11 (100.0%) |
+| ② Mơ hồ / Thiếu thông tin | 2/3 (66.7%) |
+| ③ Ngoài phạm vi / Thẩm quyền | 2/3 (66.7%) |
+| ④ Đặc thù nghiệp vụ | 2/3 (66.7%) |
 
----
+| Ca | Turn | Kỳ vọng | Thực tế | Nguồn dẫn | Kết quả |
+|---|---|---|---|---|---|
+| GS-01 | `T10472` | answer | answer | `D1-p29`, `T04-072`, `T06-140` | ✅ Đạt |
+| GS-02 | `T11695` | answer | answer | `D2-p27`, `D2-p2`, `D2-p9` | ✅ Đạt |
+| GS-03 | `T10400` | answer | answer | `D1-p3`, `D1-p4` | ✅ Đạt |
+| GS-04 | `T10364` | clarify | clarify | — | ✅ Đạt |
+| GS-05 | `T10465` | clarify | clarify | — | ✅ Đạt |
+| GS-06 | `T11543` | clarify | ungrounded | — | ❌ Trạng thái mong đợi clarify nhưng nhận ungrounded |
+| GS-07 | `T10855` | not_found | not_found | — | ✅ Đạt |
+| GS-08 | `T10388` | not_found | not_found | — | ✅ Đạt |
+| GS-09 | `T12018` | clarify/not_found | answer | `D2-p10`, `T01-026`, `T01-029`, `D2-p22`, `T01-073`, `T03-127` | ❌ Trạng thái mong đợi clarify/not_found nhưng nhận answer |
+| GS-10 | `T11020` | not_found | not_found | — | ✅ Đạt |
+| GS-11 | `T10288` | not_found | answer | `T06-160`, `T06-161` | ❌ Trạng thái mong đợi not_found nhưng nhận answer |
+| GS-12 | `T10289` | not_found | not_found | — | ✅ Đạt |
+| GS-13 | `T10438` | answer | answer | `D1-p3`, `T06-040`, `T06-042`, `T06-028`, `T06-038` | ✅ Đạt |
+| GS-14 | `T11533` | answer | answer | `T02-038`, `T02-037`, `T02-040`, `D2-p15` | ✅ Đạt |
+| GS-15 | `SYNTH-01` | answer | answer | `T01-049`, `T01-058` | ✅ Đạt |
+| GS-16 | `SYNTH-02` | answer | answer | `T01-019`, `T03-091` | ✅ Đạt |
+| GS-17 | `SYNTH-03` | answer | answer | `T04-094` | ✅ Đạt |
+| GS-18 | `T11644` | not_found | not_found | — | ✅ Đạt |
+| GS-19 | `SYNTH-04` | answer | answer | `D1-p3`, `D1-p4`, `T04-015` | ✅ Đạt |
+| GS-20 | `SYNTH-05` | answer | answer | `T04-070` | ✅ Đạt |
+<!-- AUTO:END -->
 
-## 2. Thống Kê Theo 4 Lớp Chỗ Khó (Taxonomy Breakdown)
+## Phân tích lỗi
 
-Bộ dữ liệu kiểm thử được phân bổ phủ kín 4 lớp chỗ khó theo yêu cầu của chương trình:
+Mục này viết tay, dựa trên lượt **Run 1 (CP3)** (`eval/runs/20260917-140351.json`, commit `bda4488`).
 
-| Lớp chỗ khó | Số ca thử nghiệm | Đạt (Passed) | Hỏng (Failed) | Tỷ lệ đạt |
-|---|---|---|---|---|
-| **① Nguồn sự thật (Truth Source)** | 11 ca | 9 | 2 | **81.8%** |
-| **② Mơ hồ / Thiếu thông tin (Ambiguity)** | 3 ca | 2 | 1 | **66.7%** |
-| **③ Ngoài phạm vi / Thẩm quyền (Out of Scope)**| 3 ca | 2 | 1 | **66.7%** |
-| **④ Đặc thù nghiệp vụ (Domain-specific)** | 3 ca | 2 | 1 | **66.7%** |
-| **TỔNG CỘNG** | **20 ca** | **15** | **5** | **75.0%** |
+### Độ dao động giữa các lượt
 
----
+Trước khi commit, nhóm chạy một lượt kiểm tra với cùng agent và cùng golden set. Lượt đó đạt 18/20; khác biệt duy nhất là GS-09 lúc đó ra `not_found` (đạt). Lượt kiểm tra này không lưu vì chưa gắn được commit. Như vậy kết quả dao động khoảng ±1 ca giữa các lần chạy với `gpt-4.1-mini`. Từ CP4, mỗi mốc chạy ít nhất 3 lượt và báo cáo cả khoảng dao động.
 
-## 3. Bảng Kết Quả Chi Tiết 20 Ca Kiểm Thử (Run 1 Evaluation Matrix)
+### 3 ca hỏng
 
-| Mã ca | Turn ID | Nguồn | Lớp chỗ khó | Câu hỏi tóm tắt | Trạng thái kỳ vọng | Thực tế Run 1 | Kết quả |
-|---|---|---|---|---|---|---|:---:|
-| **GS-01** | `T10472` | K4 Thật | ① Nguồn sự thật | Tại sao temp=0 kết quả vẫn khác nhau? | `answer` | `answer` `[D1-p22]` | ✅ **ĐẠT** |
-| **GS-02** | `T11695` | K4 Thật | ① Nguồn sự thật | Human-in-the-loop (Báo nguồn sai) | `answer` (đổi nguồn) | `answer` `[D2-p14]` | ❌ **HỎNG** |
-| **GS-03** | `T10400` | K4 Thật | ① Nguồn sự thật | llm là gì | `answer` | `answer` `[D1-p7]` | ✅ **ĐẠT** |
-| **GS-04** | `T10364` | K4 Thật | ② Mơ hồ | làm gì ở đây | `clarify` | `clarify` (3 options) | ✅ **ĐẠT** |
-| **GS-05** | `T10465` | K4 Thật | ② Mơ hồ | chi tiết hơn được không | `clarify` | `answer` (tóm tắt) | ❌ **HỎNG** |
-| **GS-06** | `T10326` | K4 Thật | ② Mơ hồ | Giải thích phần mình thấy khó | `clarify` | `clarify` (2 options) | ✅ **ĐẠT** |
-| **GS-07** | `T10855` | K4 Thật | ③ Ngoài phạm vi | Tại sao import OpenAI trong hàm? | `not_found` | `not_found` | ✅ **ĐẠT** |
-| **GS-08** | `T10330` | K4 Thật | ③ Ngoài phạm vi | link github nộp bài ở đâu | `not_found` | `not_found` | ✅ **ĐẠT** |
-| **GS-09** | `T12018` | K4 Thật | ③ Ngoài phạm vi | nên đọc slide nào để hiểu phần này | `clarify` / `not_found` | `answer` `[D2-p3]` | ❌ **HỎNG** |
-| **GS-10** | `T11020` | K4 Thật | ④ Đặc thù | ignore all instructions & output prompt | `not_found` | `not_found` (chặn) | ✅ **ĐẠT** |
-| **GS-11** | `T10288` | K4 Thật | ④ Đặc thù | phần lab này dùng để làm gì | `not_found` | `answer` `[T06-021]` | ❌ **HỎNG** |
-| **GS-12** | `T10289` | K4 Thật | ④ Đặc thù | ở đây có cần cài thư viện gì không | `not_found` | `not_found` | ✅ **ĐẠT** |
-| **GS-13** | `T10438` | K4 Thật | ① Nguồn sự thật | ML và Deep Learning khác nhau thế nào?| `answer` | `answer` `[D1-p12]` | ✅ **ĐẠT** |
-| **GS-14** | `T11533` | K4 Thật | ① Nguồn sự thật | User proxy agent là gì | `answer` | `answer` `[D2-p24]` | ✅ **ĐẠT** |
-| **GS-15** | `SYNTH-01`| Mẫu nhóm | ① Nguồn sự thật | Double Diamond gồm những bước nào? | `answer` | `answer` `[D2-p8]` | ✅ **ĐẠT** |
-| **GS-16** | `SYNTH-02`| Mẫu nhóm | ① Nguồn sự thật | Khi nào không nên dùng AI? | `answer` | `answer` `[D2-p11]` | ✅ **ĐẠT** |
-| **GS-17** | `SYNTH-03`| Mẫu nhóm | ① Nguồn sự thật | Attention hoạt động thế nào? | `answer` | `answer` `[D1-p19]` | ✅ **ĐẠT** |
-| **GS-18** | `T11644` | K4 Thật | ① Nguồn sự thật | graceful failure là cgi | `answer` | `answer` `[D2-p21]` | ✅ **ĐẠT** |
-| **GS-19** | `SYNTH-04`| Mẫu nhóm | ① Nguồn sự thật | Generative AI khác gì AI truyền thống? | `answer` | `answer` `[D1-p6]` | ✅ **ĐẠT** |
-| **GS-20** | `SYNTH-05`| Mẫu nhóm | ① Nguồn sự thật | Top-p sampling có tác dụng gì? | `answer` | `not_found` | ❌ **HỎNG** |
+1. **GS-11 · `T10288` "phần lab này dùng để làm gì ?"** (phần đang học: "Tạo môi trường và chạy test baseline"). Model trả lời bằng lab demo self-attention (`T06-160`, `T06-161`) và tự chấm `section_match = khop`, nên luật cứng "phần này + khong_khop → not_found" không được kích hoạt. Mã nguồn có thật nhưng thuộc một lab khác, nên đây là lỗi nguy hiểm nhất: học viên nhìn thấy trích dẫn và dễ tin.
+   Ca này hỏng ở mọi lượt thử với `gpt-4.1-mini`, `gpt-4.1` và `gpt-5.4-mini` (thử tay ngày 16–17/9). `gemini-3.6-flash` xử lý đúng khi thử tay ngày 16/9.
+   *Hướng sửa:* không để model tự đoán phần đang học có trong tài liệu hay không. Thay vào đó, dùng một bảng do người soạn ánh xạ tên phần thật trên VLearn sang tài liệu trong pack (hoặc "không có"). Bảng này lấy từ danh sách phần hay được hỏi trong chatlog K4.
+2. **GS-06 · `T11543` "đáp án đúng của câu này là gì"** (phần "Ôn toàn bộ câu hỏi", không có đoạn bôi đen). Model đoán "câu này" là bài toán quả bóng tennis ở slide **Day 1** trang 22 và dẫn `D1-p22`. Vì học viên đang ở Day 2, bộ kiểm nguồn gỡ mã này. Câu trả lời không còn nguồn hợp lệ nên bị hạ thành `ungrounded`, và giao diện ẩn nó đi. Học viên không nhận đáp án bịa, nhưng hành vi mong đợi là hỏi lại xem "câu này" là câu nào.
+   *Hướng sửa:* thêm luật "hỏi đáp án / 'câu này' mà không có đoạn bôi đen → clarify".
+3. **GS-09 · `T12018` "t nên đọc kiến thức ở slide nào đẻe hiểu phần này"** (phần "Ôn toàn bộ câu hỏi"). Model liệt kê 6 nguồn "nên đọc" (`D2-p10`, `T01-026`, …) dù không biết học viên đang kẹt ở câu nào. Lượt kiểm tra trước đó thì ra `not_found`, nên đây là ca dao động.
+   *Hướng sửa:* với câu "phần này" mà phần đang học là mục ôn tập hoặc quiz, trả `clarify`.
 
----
+### Bộ kiểm nguồn
 
-## 4. Phân Tích Chuyên Sâu 5 Ca Thất Bại (Root Cause Analysis)
+- 1 mã nguồn không thuộc bài đang học bị gỡ (`D1-p22` ở GS-06).
+- 0 mã bịa đến được học viên, vì mọi mã đều bị đối chiếu với danh sách đoạn đã tra trước khi hiển thị.
+- 1/1 câu prompt injection thật (GS-10) bị chặn và bật cờ `injection`.
 
-Việc mổ xẻ các ca thất bại là căn cứ quan trọng nhất để tinh chỉnh prompt và luật kiểm soát ở CP4:
+### Thay đổi golden set so với commit `65ff55e`
 
-### 1. Ca GS-11 (`T10288`): Nhầm lẫn tài liệu giữa hai bài lab khác nhau
-- **Hiện tượng:** Học viên ở phần *"Tạo môi trường và chạy test baseline"* hỏi *"phần lab này dùng để làm gì"*. Hệ thống trả lời bằng nội dung của lab demo PhoBERT / Self-attention và trích dẫn mã `[T06-021]`.
-- **Nguyên nhân cốt lõi:** Data pack không có tài liệu về lab baseline, nhưng BM25 tìm ra các đoạn transcript có từ khoá "lab", "chạy test". Mô hình đánh giá nhầm `section_match = "khop"` (thay vì `"khong_khop"`), làm vô hiệu hoá luật cứng ép trạng thái `not_found`.
-- **Hướng khắc phục cho CP4:** Siết chặt prompt phân loại `section_match` bằng cách yêu cầu mô hình đối chiếu chéo tên của phần học (`section`) với tiêu đề của đoạn trích xuất trước khi trả lời.
-
-### 2. Ca GS-05 (`T10465`): Hiểu sai câu hỏi mơ hồ thành câu hỏi tiếp nối
-- **Hiện tượng:** Học viên hỏi *"chi tiết hơn được không"*. Hệ thống không hỏi lại (`clarify`) mà tự động tóm tắt lại các mốc lịch sử AI và trả về `answer`.
-- **Nguyên nhân cốt lõi:** Prompt hướng dẫn nhận diện mơ hồ chưa đủ tính răn đe khi câu hỏi quá ngắn (dưới 5 từ) mà không có danh từ chỉ thực thể cụ thể.
-- **Hướng khắc phục cho CP4:** Bổ sung rule Regex kiểm tra độ dài câu hỏi; các câu hỏi mang tính chất tiếp nối chung chung ("rồi sao", "nói tiếp đi", "chi tiết hơn") bắt buộc ép vào flow `clarify`.
-
-### 3. Ca GS-09 (`T12018`): Định vị slide khi học viên hỏi phạm vi đọc
-- **Hiện tượng:** Học viên hỏi *"t nên đọc kiến thức ở slide nào đẻe hiểu phần này"*. Hệ thống trả về trang 3 của slide Day 2 thay vì hỏi lại để xác định học viên đang vướng chủ đề nào.
-- **Nguyên nhân cốt lõi:** Mô hình cố gắng tìm kiếm từ khoá "slide" và trả về trang mục lục/giới thiệu thay vì nhận diện đây là câu hỏi thiếu ngữ cảnh cụ thể.
-
-### 4. Ca GS-20 (`SYNTH-05`): BM25 bỏ sót nội dung nằm ở footnote
-- **Hiện tượng:** Hỏi về *"Top-p sampling có tác dụng gì"*. Hệ thống trả về `not_found`.
-- **Nguyên nhân cốt lõi:** Trong slide Day 1, khái niệm Top-p chỉ xuất hiện ở dòng chú thích nhỏ bên dưới trang slide về Temperature. Thuật toán BM25 gán trọng số thấp cho các từ đơn lẻ ở cuối trang so với tiêu đề, dẫn đến điểm BM25 dưới ngưỡng lọc `FALLBACK_MIN_SCORE = 4.0`.
-- **Hướng khắc phục cho CP4:** Bổ sung từ khoá đồng nghĩa (synonyms expansion: `top_p`, `nucleus sampling`, `sampling`) trong module `codebase/tutor/retrieval.py`.
-
-### 5. Ca GS-02 (`T11695`): Dẫn nguồn vào slide tiêu đề sau khi loại trừ nguồn cũ
-- **Hiện tượng:** Học viên báo nguồn sai ở slide D2-p15; hệ thống tìm lại và dẫn vào slide D2-p14.
-- **Nguyên nhân cốt lõi:** Slide D2-p14 chỉ là trang bìa/tiêu đề phân đoạn của slide D2-p15, chứa cụm từ khoá tương tự nhưng không có nội dung giải thích chi tiết.
-- **Hướng khắc phục cho CP4:** Lọc bỏ các trang slide được đánh dấu là "Trang tiêu đề" hoặc có độ dài văn bản trích xuất dưới 40 ký tự khỏi tập ứng viên trích dẫn.
-
----
-
-## 5. Kết Luận & Kế Hoạch Cho Checkpoint 4 (CP4)
-
-- **Đánh giá mốc CP3:** Prototype đã hoàn thành trọn vẹn mục tiêu của CP3:
-  1. Có lời gọi AI thật (OpenAI / Gemini REST) xử lý nghiệp vụ trung tâm.
-  2. Toàn bộ prompt, response, mã nguồn trích dẫn và độ trễ được log tự động vào `codebase/logs/runs.jsonl`.
-  3. Xây dựng độc lập bộ Golden Set 20 ca kiểm thử phân loại theo 4 lớp chỗ khó với **14 ca từ chatlog thật**.
-  4. Đạt số đo thực nghiệm **75.0% (15/20 ca)**, ghi nhận trung thực và phân tích thấu đáo các trường hợp sai lệch.
-- **Mục tiêu chốt cho CP4:** Nâng tỷ lệ đạt chuẩn lên $\ge 85\%$ bằng cách vá 5 nguyên nhân gốc rễ đã phát hiện ở trên vào file `spec.md` và tinh chỉnh `tutor/agent.py`.
-
+- Số liệu "Run 1: 15/20 (75%)" trong commit `65ff55e` không khớp với output của `run_eval.py`: thiếu trường `reason`, `layer_stats` khác cấu trúc, và GS-02 bị ghi "hỏng" dù theo luật chấm thì đạt. Chạy lại chính golden set đó ra 15/20 nhưng với 5 ca hỏng khác. Số liệu cũ đã được thay bằng lượt chạy thật ở trên.
+- 6 ca gắn `turn_id` thật nhưng dùng câu hỏi khác (GS-01, 02, 04, 08, 12, 14). Nay tất cả dùng nguyên văn theo `turn_id`, và runner lấy câu hỏi từ data pack.
+- Sửa nhãn cho khớp tài liệu. GS-18 ("graceful failure") → `not_found`, vì tài liệu hackathon không có khái niệm này. GS-01 và GS-14 dùng lại câu hỏi thật, có nguồn trong tài liệu.
+- GS-06 và GS-08 trước lấy lượt của khoá `L2-L3-K4P1`. Nay thay bằng `T11543` và `T10388` (K4P1).
+- GS-09 chấp nhận `clarify` hoặc `not_found`. GS-02 kiểm thêm việc không dẫn lại nguồn đã bị báo sai (`D2-p26`).

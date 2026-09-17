@@ -157,9 +157,9 @@ danh sách willing user:
 
 - **Golden set (≥20 case theo cơ cấu trong guide §2.6, file trong `eval/golden_set.json`):**
   - Tổng số: **20 ca kiểm thử độc lập** (không dùng làm ví dụ few-shot trong prompt).
-  - Tỷ lệ từ dữ liệu thực: **14/20 ca (70%)** trích xuất từ chatlog thật K4 (`data/vlearn-pack/chatlog/tutor_turns.csv`), vượt yêu cầu tối thiểu 10 ca.
+  - Tỷ lệ từ dữ liệu thực: **15/20 ca (75%)** là lượt hỏi thật của K4 (`K4P1`, D01/D03) trong `tutor_turns.csv`, dùng nguyên văn theo `turn_id`. 5 ca còn lại (`SYNTH-01…05`) do nhóm soạn. Golden set chỉ lưu `turn_id` và câu rút gọn; `eval/run_eval.py` lấy nguyên văn từ data pack lúc chạy.
   - Phân bổ đủ 4 lớp chỗ khó:
-    - *① Nguồn sự thật (Truth Source - $\ge 2$):* 11 ca (`GS-01`, `GS-02`, `GS-03`, `GS-13`, `GS-14`, `GS-15`, `GS-16`, `GS-17`, `GS-18`, `GS-19`, `GS-20`).
+    - *① Nguồn sự thật (Truth Source - $\ge 2$):* 11 ca (`GS-01`, `GS-02`, `GS-03`, `GS-13`, `GS-14`, `GS-15`, `GS-16`, `GS-17`, `GS-18`, `GS-19`, `GS-20`). Trong đó `GS-18` ("graceful failure") là ca tài liệu thiếu, kỳ vọng `not_found`; `GS-02` kiểm luồng báo nguồn sai (loại `D2-p26`, không được dẫn lại).
     - *② Mơ hồ / Thiếu thông tin (Ambiguity - $\ge 2$):* 3 ca (`GS-04`, `GS-05`, `GS-06`).
     - *③ Ngoài phạm vi / Thẩm quyền (Out of Scope - $\ge 2$):* 3 ca (`GS-07`, `GS-08`, `GS-09`).
     - *④ Đặc thù nghiệp vụ (Domain-specific / Injection / Deictic - $\ge 2$):* 3 ca (`GS-10`, `GS-11`, `GS-12`).
@@ -171,8 +171,8 @@ danh sách willing user:
 
 | Lượt chạy | Thời điểm | Mô hình | Tổng số ca | Số ca Đạt | Tỷ lệ Đạt (Pass rate) | Ghi chú & Trọng tâm cải thiện |
 |---|---|---|:---:|:---:|:---:|---|
-| **Run 1 (CP3)** | 17/09/2026 | `gpt-4.1-mini` (fallback `gpt-4o-mini`) | 20 | 15 | **75.0%** | Baseline ban đầu. Đạt tiêu chuẩn CP3 ($\ge 70\%$). Chi tiết 5 ca hỏng tại `eval/run_results.md`. |
-| Run 2 (CP4) | -- | -- | 20 | -- | -- | Tinh chỉnh prompt Regex cho câu hỏi ngắn (GS-05, GS-09) và khớp phần học deictic (GS-11). |
+| **Run 1 (CP3)** | 17/09/2026 14:03 | `gpt-4.1-mini-2025-04-14` | 20 | 17 | **85.0%** | Commit `bda4488`, file `eval/runs/20260917-140351.json`. Hỏng: GS-11 (lấy lab khác trả lời "phần lab này"), GS-06 (đoán "câu này" sang slide Day 1, bị bộ kiểm gỡ nguồn → `ungrounded`), GS-09 (liệt kê slide khi không rõ "phần này"). 1 mã nguồn ngoài bài bị gỡ, 0 mã bịa đến học viên, injection 1/1 bị chặn. Lượt kiểm tra trước khi commit: 18/20, nên kết quả dao động ±1 ca. Phân tích: `eval/run_results.md`. |
+| Run 2 (CP4) | -- | -- | 20 | -- | -- | Bảng ánh xạ "phần đang học → tài liệu" do người soạn (GS-11), luật "câu này / đáp án" không kèm đoạn bôi đen → `clarify` (GS-06), mục ôn tập + "phần này" → `clarify` (GS-09). Chạy ≥3 lượt, báo cả khoảng dao động. |
 | Run 3 (CP5) | -- | -- | 20 | -- | -- | Hoàn thiện UX và đánh giá cuối cùng. |
 
 ## §8. Phân công & kế hoạch
@@ -189,4 +189,5 @@ danh sách willing user:
 |---|---|---|
 | 16/9 | §1: bỏ ý "thiếu nguồn nhất là khi câu hỏi không gắn với đoạn bôi đen" | Data bác: K3 có bôi đen thiếu nguồn 38,7% so với 15,8% khi không bôi đen; K4 không có lượt bôi đen nào |
 | 16/9 | §1: số chính đổi từ 686 lượt (24,4%) sang ≈310 lượt (≈11%) | Kiểm tay 40 lượt: chỉ 18/40 đúng loại, đếm bằng từ khoá bị thổi phồng |
-| 17/9 | §7: Thiết lập bộ Golden Set 20 ca (`eval/golden_set.json`), chốt Quality Bar ($\ge 70\%$ ở CP3, $\ge 85\%$ ở CP4) và ghi nhận số đo Run 1 (15/20 Đạt - 75.0%) | Hoàn thành tiêu chí đo lường độc lập cho Checkpoint 3 (CP3) |
+| 17/9 | §7: Thiết lập bộ Golden Set 20 ca (`eval/golden_set.json`), chốt Quality Bar ($\ge 70\%$ ở CP3, $\ge 85\%$ ở CP4) | Hoàn thành tiêu chí đo lường độc lập cho Checkpoint 3 (CP3) |
+| 17/9 | §7: Bỏ số Run 1 "15/20 (75%)"; thay bằng lượt chạy thật 17/20 (85%). Golden set dùng nguyên văn chatlog theo `turn_id`, sửa nhãn GS-01/14/18, thay GS-06/08 bằng lượt K4P1 | Số cũ không khớp với output của `run_eval.py`; 6 ca gắn `turn_id` thật nhưng dùng câu hỏi khác; 3 nhãn không khớp tài liệu |

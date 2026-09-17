@@ -1,0 +1,538 @@
+{
+  "timestamp": "2026-09-17T23:25:43",
+  "git_commit": "6e940f6",
+  "hint_set_sha1": "b406b6b66141f051bad2698709d87163c78cd43d",
+  "duration_s": 43.0,
+  "models": [
+    "gpt-4.1-mini",
+    "gpt-4o-mini",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-flash-lite-latest"
+  ],
+  "summary": {
+    "total": 20,
+    "passed": 19,
+    "route_ok": 19,
+    "hint_expected": 5,
+    "hint_detected": 4,
+    "hint_predicted": 4,
+    "hint_predicted_correct": 4,
+    "bac1_ok": 4,
+    "bac2_ok": 4,
+    "giai_thich_ok": 5,
+    "giai_thich_total": 5,
+    "leak_blocked": 0,
+    "median_latency_ms": {
+      "bac1": 2999,
+      "bac2": 2664,
+      "giai_thich": 4098
+    },
+    "golden_false_triggers": []
+  },
+  "cases": [
+    {
+      "id": "HS-01",
+      "turn_id": "T11196",
+      "expected": "hint",
+      "route": "hint",
+      "route_ok": true,
+      "steps": {
+        "bac1": {
+          "status": "hint",
+          "level": 1,
+          "citations": [
+            "D1-p3"
+          ],
+          "verified_quotes": [],
+          "flags": [
+            "quiz_hint"
+          ],
+          "concept": "Phân loại các hệ thống AI theo đặc điểm và chức năng",
+          "text": "Xem lại phân loại AI, ML, Deep Learning, Generative AI, LLM trong slide Day 1 trang 3 [D1-p3] để hiểu các hệ thống thuộc nhóm nào.",
+          "guiding_question": "Bạn có thể xác định từng hệ thống thuộc loại AI nào dựa trên cách chúng hoạt động không?",
+          "answer": "Xem lại phân loại AI, ML, Deep Learning, Generative AI, LLM trong slide Day 1 trang 3 [D1-p3] để hiểu các hệ thống thuộc nhóm nào.\n\n**Câu hỏi gợi mở:** Bạn có thể xác định từng hệ thống thuộc loại AI nào dựa trên cách chúng hoạt động không?",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 3160,
+          "error": null
+        },
+        "bac2": {
+          "status": "hint",
+          "level": 2,
+          "citations": [
+            "D1-p3"
+          ],
+          "verified_quotes": [
+            "AI, ML, Deep Learning, GenAI, LLM — nằm ở đâu trong cùng một hệ? từ rộng đến hẹp ARTIFICIAL INTELLIGENCE MACHINE LEARNING DEEP LEARNING GENERATIVE AI LLM",
+            "Deep learning — mạng nơ-ron nhiều tầng tự học đặc trưng. Generative AI — sinh nội dung mới: văn bản, ảnh, code. LLM — model nền chuyên ngôn ngữ, tim của làn sóng hiện nay."
+          ],
+          "flags": [
+            "quiz_hint",
+            "hint_repeat_replaced"
+          ],
+          "concept": "Phân loại AI, ML, Deep Learning, Generative AI, LLM theo chức năng và công nghệ",
+          "text": "Đối chiếu từng phương án với câu trích bên dưới [D1-p3]: phương án nào nói đúng điều câu trích nói, phương án nào nói quá hoặc ngược lại?",
+          "guiding_question": "Bạn có thể dựa vào cách hoạt động và mục đích của từng hệ thống để xác định nó thuộc nhóm AI nào không?",
+          "answer": "Đối chiếu từng phương án với câu trích bên dưới [D1-p3]: phương án nào nói đúng điều câu trích nói, phương án nào nói quá hoặc ngược lại?\n\n**Câu hỏi gợi mở:** Bạn có thể dựa vào cách hoạt động và mục đích của từng hệ thống để xác định nó thuộc nhóm AI nào không?",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 2689,
+          "error": null
+        },
+        "giai_thich": {
+          "status": "answer",
+          "level": 3,
+          "citations": [
+            "D1-p3"
+          ],
+          "verified_quotes": [
+            "AI — chiếc ô lớn nhất: mọi hệ thống có yếu tố “thông minh”.",
+            "Machine learning — học từ dữ liệu thay vì viết luật tay.",
+            "Deep learning — mạng nơ-ron nhiều tầng tự học đặc trưng.",
+            "Generative AI — sinh nội dung mới: văn bản, ảnh, code.",
+            "LLM không phải toàn bộ AI — nhưng nó là tầng"
+          ],
+          "flags": [
+            "quiz_explain"
+          ],
+          "concept": "",
+          "text": "",
+          "guiding_question": "",
+          "answer": "- Hệ thống (2) tạo ảnh từ mô tả thuộc generative AI và sử dụng deep learning, vì generative AI là sinh nội dung mới như văn bản, ảnh, code, và deep learning là mạng nơ-ron nhiều tầng tự học đặc trưng [D1-p3].\n- Hệ thống (3) là mô hình ngôn ngữ lớn (LLM) dự đoán token tiếp theo, nhưng LLM không phải là toàn bộ AI mà chỉ là một tầng trong AI [D1-p3]. Vì vậy, phát biểu B sai.\n- Cả ba hệ thống đều nằm trong phạm vi AI, vì AI là ô lớn nhất bao gồm mọi hệ thống có yếu tố thông minh, trong đó có machine learning và deep learning [D1-p3].\n- Hệ thống (1) mô hình dự báo khách hàng rời bỏ từ bảng số liệu",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 4083,
+          "error": null
+        }
+      },
+      "checks": {
+        "bac1_co_nguon": true,
+        "bac2_co_cau_trich": true,
+        "giai_thich_co_nguon": true
+      },
+      "leak_blocked": 0,
+      "passed": true
+    },
+    {
+      "id": "HS-02",
+      "turn_id": "T12258",
+      "expected": "hint",
+      "route": "hint",
+      "route_ok": true,
+      "steps": {
+        "bac1": {
+          "status": "hint",
+          "level": 1,
+          "citations": [
+            "D2-p23"
+          ],
+          "verified_quotes": [],
+          "flags": [
+            "quiz_hint"
+          ],
+          "concept": "Đánh đổi giữa precision và recall trong hệ thống cảnh báo",
+          "text": "Xem lại phần giải thích về đánh đổi giữa precision và recall, đặc biệt hệ quả của false positive và false negative trong cảnh báo y tế [D2-p23].",
+          "guiding_question": "Trong hệ thống cảnh báo sepsis có human triage, việc ưu tiên giảm bỏ sót ca bệnh hay giảm cảnh báo giả sẽ ảnh hưởng thế nào đến precision và recall?",
+          "answer": "Xem lại phần giải thích về đánh đổi giữa precision và recall, đặc biệt hệ quả của false positive và false negative trong cảnh báo y tế [D2-p23].\n\n**Câu hỏi gợi mở:** Trong hệ thống cảnh báo sepsis có human triage, việc ưu tiên giảm bỏ sót ca bệnh hay giảm cảnh báo giả sẽ ảnh hưởng thế nào đến precision và recall?",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 2999,
+          "error": null
+        },
+        "bac2": {
+          "status": "hint",
+          "level": 2,
+          "citations": [
+            "D2-p23"
+          ],
+          "verified_quotes": [
+            "Precision ↔ Recall: đánh đổi không tránh khỏi — Cùng một hệ thống AI, hai hướng vặn nút ngược nhau"
+          ],
+          "flags": [
+            "quiz_hint",
+            "hint_repeat_replaced"
+          ],
+          "concept": "Đánh đổi giữa precision và recall trong cảnh báo y tế",
+          "text": "Đối chiếu từng phương án với câu trích bên dưới [D2-p23]: phương án nào nói đúng điều câu trích nói, phương án nào nói quá hoặc ngược lại?",
+          "guiding_question": "Trong hệ thống cảnh báo sepsis có human triage, việc ưu tiên giảm bỏ sót ca bệnh hay giảm cảnh báo giả sẽ ảnh hưởng thế nào đến precision và recall?",
+          "answer": "Đối chiếu từng phương án với câu trích bên dưới [D2-p23]: phương án nào nói đúng điều câu trích nói, phương án nào nói quá hoặc ngược lại?\n\n**Câu hỏi gợi mở:** Trong hệ thống cảnh báo sepsis có human triage, việc ưu tiên giảm bỏ sót ca bệnh hay giảm cảnh báo giả sẽ ảnh hưởng thế nào đến precision và recall?",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 2608,
+          "error": null
+        },
+        "giai_thich": {
+          "status": "answer",
+          "level": 3,
+          "citations": [
+            "D2-p23",
+            "D2-p22"
+          ],
+          "verified_quotes": [
+            "Không có cấu hình đúng tuyệt đối — phải test điểm cân bằng với chính người dùng.",
+            "Bao trọn mọi trường hợp cần giúp — không học viên nào bị bỏ lại phía sau.",
+            "Chi phí của FP và FN KHÔNG đối xứng — báo cháy g",
+            "Học viên đang kẹt thật nhưng AI bỏ sót, không gợi ý → học viên vẫn chờ lâu như cũ."
+          ],
+          "flags": [
+            "quiz_explain"
+          ],
+          "concept": "",
+          "text": "",
+          "guiding_question": "",
+          "answer": "- A đúng vì điểm ngưỡng (threshold) cần được test thực tế trong quy trình triage để cân bằng giữa các chỉ số và trải nghiệm người dùng cuối [D2-p23].\n- B sai vì precision vẫn cần đo để đánh giá độ chính xác của các gợi ý, dù ưu tiên recall cao hơn [D2-p23].\n- C đúng vì trong bối cảnh này, bỏ sót ca bệnh (false negative) nguy hiểm hơn cảnh báo giả (false positive), nên ưu tiên recall cao hơn để bao trọn mọi trường hợp cần giúp [D2-p23][D2-p22].\n- D đúng vì false negative là lỗi bỏ sót ca bệnh thật, cần theo dõi chặt để không bỏ sót học viên hoặc bệnh nhân cần giúp [D2-p22].\n- E sai vì recall 10",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 4484,
+          "error": null
+        }
+      },
+      "checks": {
+        "bac1_co_nguon": true,
+        "bac2_co_cau_trich": true,
+        "giai_thich_co_nguon": true
+      },
+      "leak_blocked": 0,
+      "passed": true
+    },
+    {
+      "id": "HS-03",
+      "turn_id": "T10456",
+      "expected": "hint",
+      "route": "hint",
+      "route_ok": true,
+      "steps": {
+        "bac1": {
+          "status": "hint",
+          "level": 1,
+          "citations": [
+            "D1-p24"
+          ],
+          "verified_quotes": [],
+          "flags": [
+            "quiz_hint"
+          ],
+          "concept": "Vòng lặp xử lý của agent gồm 5 bộ phận chính",
+          "text": "Xem lại cấu trúc vòng lặp agent gồm Goal, Reasoning, Tools, Memory, Action trong slide Day 1 trang 24 [D1-p24].",
+          "guiding_question": "Sau khi nhận goal, bước nào trong vòng lặp agent sẽ được thực hiện tiếp theo?",
+          "answer": "Xem lại cấu trúc vòng lặp agent gồm Goal, Reasoning, Tools, Memory, Action trong slide Day 1 trang 24 [D1-p24].\n\n**Câu hỏi gợi mở:** Sau khi nhận goal, bước nào trong vòng lặp agent sẽ được thực hiện tiếp theo?",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 2705,
+          "error": null
+        },
+        "bac2": {
+          "status": "hint",
+          "level": 2,
+          "citations": [
+            "D1-p24"
+          ],
+          "verified_quotes": [
+            "Agent = Goal + Reasoning + Tools + Memory + Action — chạy thành vòng lặp cho tới khi xong việc"
+          ],
+          "flags": [
+            "quiz_hint"
+          ],
+          "concept": "Vòng lặp agent gồm 5 bộ phận: Goal, Reasoning, Tools, Memory, Action",
+          "text": "Xem lại slide Day 1 trang 24 về giải phẫu một agent với 5 bộ phận tạo thành vòng lặp liên tục [D1-p24].",
+          "guiding_question": "Sau khi nhận goal, bước tiếp theo trong vòng lặp agent là gì?",
+          "answer": "Xem lại slide Day 1 trang 24 về giải phẫu một agent với 5 bộ phận tạo thành vòng lặp liên tục [D1-p24].\n\n**Câu hỏi gợi mở:** Sau khi nhận goal, bước tiếp theo trong vòng lặp agent là gì?",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 2250,
+          "error": null
+        },
+        "giai_thich": {
+          "status": "answer",
+          "level": 3,
+          "citations": [
+            "D1-p24"
+          ],
+          "verified_quotes": [
+            "Agent = Goal + Reasoning + Tools + Memory + Action — chạy thành vòng lặp cho tới khi xong việc"
+          ],
+          "flags": [
+            "quiz_explain"
+          ],
+          "concept": "",
+          "text": "",
+          "guiding_question": "",
+          "answer": "Vòng xử lý của agent tra cứu tồn kho theo tài liệu gồm các bước sau:\n\n- Bắt đầu với Goal (mục tiêu cần đạt) đã nhận.\n- Reasoning (bộ não LLM) chia các bước và quyết định cần gọi tool inventory.check để kiểm tra tồn kho.\n- Action: gọi tool inventory.check.\n- Quan sát kết quả tool trả về, ví dụ kho A còn 0, kho B còn 4.\n- Cập nhật state/memory với số lượng vừa quan sát được.\n- Đánh giá điều kiện dừng hoặc lập bước tiếp dựa trên thông tin đã có.\n\nTất cả các bước này tạo thành vòng lặp agent gồm Goal, Reasoning, Tools, Memory, Action, chạy liên tục cho đến khi hoàn thành nhiệm vụ [D1-p24].",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 4098,
+          "error": null
+        }
+      },
+      "checks": {
+        "bac1_co_nguon": true,
+        "bac2_co_cau_trich": true,
+        "giai_thich_co_nguon": true
+      },
+      "leak_blocked": 0,
+      "passed": true
+    },
+    {
+      "id": "HS-04",
+      "turn_id": "T11585",
+      "expected": "hint",
+      "route": "hint",
+      "route_ok": true,
+      "steps": {
+        "bac1": {
+          "status": "hint",
+          "level": 1,
+          "citations": [
+            "T04-064",
+            "T04-066"
+          ],
+          "verified_quotes": [],
+          "flags": [
+            "quiz_hint"
+          ],
+          "concept": "quá trình suy luận và dự đoán token tiếp theo trong LLM",
+          "text": "Xem lại phần thí nghiệm bàn cờ và cách mô hình dự đoán nước đi dựa trên chuỗi token, cũng như việc kiểm tra suy luận bên trong mô hình để hiểu cách nó dự đoán nước đi hợp lệ [T04-064][T04-066].",
+          "guiding_question": "Mô hình dựa vào thông tin gì để dự đoán nước đi hợp lệ trong trò chơi Othello?",
+          "answer": "Xem lại phần thí nghiệm bàn cờ và cách mô hình dự đoán nước đi dựa trên chuỗi token, cũng như việc kiểm tra suy luận bên trong mô hình để hiểu cách nó dự đoán nước đi hợp lệ [T04-064][T04-066].\n\n**Câu hỏi gợi mở:** Mô hình dựa vào thông tin gì để dự đoán nước đi hợp lệ trong trò chơi Othello?",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 2869,
+          "error": null
+        },
+        "bac2": {
+          "status": "hint",
+          "level": 2,
+          "citations": [
+            "T04-064",
+            "T04-066"
+          ],
+          "verified_quotes": [
+            "cho AI học một chuỗi token: tức là",
+            "họ gắn thêm một câu hỏi, một phép thử, ở trong từng bước suy luận đấy — hỏi những tín hiệu liên quan đến luật chơi của bàn cờ này"
+          ],
+          "flags": [
+            "quiz_hint",
+            "hint_repeat_replaced"
+          ],
+          "concept": "cách mô hình dự đoán nước đi dựa trên chuỗi token và suy luận nội bộ",
+          "text": "Đối chiếu từng phương án với câu trích bên dưới [T04-064][T04-066]: phương án nào nói đúng điều câu trích nói, phương án nào nói quá hoặc ngược lại?",
+          "guiding_question": "Mô hình sử dụng thông tin nào trong chuỗi token để dự đoán nước đi hợp lệ trong trò chơi Othello?",
+          "answer": "Đối chiếu từng phương án với câu trích bên dưới [T04-064][T04-066]: phương án nào nói đúng điều câu trích nói, phương án nào nói quá hoặc ngược lại?\n\n**Câu hỏi gợi mở:** Mô hình sử dụng thông tin nào trong chuỗi token để dự đoán nước đi hợp lệ trong trò chơi Othello?",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 2664,
+          "error": null
+        },
+        "giai_thich": {
+          "status": "answer",
+          "level": 3,
+          "citations": [
+            "T04-064",
+            "T04-066",
+            "T06-082"
+          ],
+          "verified_quotes": [
+            "trên một bàn cờ 8x8, lần lượt từng người sẽ đặt những quân cờ đen hoặc trắng",
+            "họ gắn thêm một câu hỏi, một phép thử, ở trong từng bước suy luận đấy — hỏi những tín hiệu liên quan đến luật chơi của bàn cờ này",
+            "cái từ kế tiếp mà mô hình sản sinh ra phải đi theo logic như thế nào"
+          ],
+          "flags": [
+            "quiz_explain"
+          ],
+          "concept": "",
+          "text": "",
+          "guiding_question": "",
+          "answer": "Trong nghiên cứu mô hình chơi Othello (bàn cờ 8x8), mô hình được huấn luyện để dự đoán token tiếp theo, tức là nước đi tiếp theo trên bàn cờ, dựa trên các quy tắc của trò chơi. Việc dự đoán này giúp mô hình có độ chính xác cao trong việc chọn nước đi hợp lệ, thể hiện qua khả năng nhận biết luật chơi và trạng thái bàn cờ trong từng bước suy luận. Cụ thể, trong thí nghiệm, mô hình không chỉ dự đoán nước đi tiếp theo mà còn được kiểm tra xem có nhận biết được màu của ô trên bàn cờ tại từng bước suy luận hay không, nhằm mổ xẻ \"black box\" của AI và xác định nó có thực sự hiểu luật chơi hay chỉ dựa ",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 3999,
+          "error": null
+        }
+      },
+      "checks": {
+        "bac1_co_nguon": true,
+        "bac2_co_cau_trich": true,
+        "giai_thich_co_nguon": true
+      },
+      "leak_blocked": 0,
+      "passed": true
+    },
+    {
+      "id": "HS-05",
+      "turn_id": "T11226",
+      "expected": "hint",
+      "route": "other",
+      "route_ok": false,
+      "steps": {},
+      "checks": {},
+      "passed": false
+    },
+    {
+      "id": "HS-06",
+      "turn_id": "T11623",
+      "expected": "explain",
+      "route": "explain",
+      "route_ok": true,
+      "steps": {
+        "giai_thich": {
+          "status": "answer",
+          "level": 3,
+          "citations": [
+            "T03-105",
+            "T03-106",
+            "T03-107"
+          ],
+          "verified_quotes": [
+            "khi các bạn làm bất kỳ hệ thống nào, không nhất thiết phải là AI, các bạn phải define cái scope là hệ thống của các bạn chạy được trong điều kiện nào là hợp lý.",
+            "Đặt vấn đề rủi ro như vậy: có bao nhiêu dạng rủi ro — nào là không có camera này, nào là tự nhiên cái mạch bị cháy này.",
+            "các bạn phải có một cái scope cho hệ thống vận hành. Trong ngành có cái thuật ngữ, hình như mình nhớ nó gọi là ODD — Operational Design Domain: tức là trong cái tình huống đấy thì hệ thống của các bạn đảm bảo hành động tốt 100%."
+          ],
+          "flags": [
+            "quiz_explain"
+          ],
+          "concept": "",
+          "text": "",
+          "guiding_question": "",
+          "answer": "Bước tiếp theo là Monitored automation có giới hạn, giữ policy checks và kill switch vì:\n\n- Hệ thống đã được kiểm chứng với 2.000 case đại diện và không có lỗi nghiêm trọng, nên có thể bắt đầu tự động hóa nhưng vẫn cần giám sát để đảm bảo an toàn.\n- Policy đổi hàng tuần và có nút can thiệp (kill switch) giúp kiểm soát rủi ro khi có sự cố xảy ra.\n- Việc giữ policy checks và kill switch giúp hạn chế rủi ro và đảm bảo hệ thống vận hành trong phạm vi đã xác định (scope), tránh các lỗi ngoài dự kiến.\n\nĐiều này phù hợp với việc xác định rõ scope vận hành và ODD (Operational Design Domain) để hệ thốn",
+          "model": "gpt-4.1-mini-2025-04-14",
+          "latency_ms": 4211,
+          "error": null
+        }
+      },
+      "checks": {
+        "giai_thich_co_nguon": true
+      },
+      "passed": true
+    },
+    {
+      "id": "HS-07",
+      "turn_id": "T11555",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-08",
+      "turn_id": "T11654",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-09",
+      "turn_id": "T11655",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-10",
+      "turn_id": "T12577",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-11",
+      "turn_id": "T11482",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-12",
+      "turn_id": "T12023",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-13",
+      "turn_id": "T12401",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-14",
+      "turn_id": "T11983",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-15",
+      "turn_id": "T12015",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-16",
+      "turn_id": "T11977",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-17",
+      "turn_id": "T11652",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-18",
+      "turn_id": "T12017",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-19",
+      "turn_id": "T11516",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    },
+    {
+      "id": "HS-20",
+      "turn_id": "T10691",
+      "expected": "other",
+      "route": "other",
+      "route_ok": true,
+      "steps": {},
+      "checks": {},
+      "passed": true
+    }
+  ]
+}

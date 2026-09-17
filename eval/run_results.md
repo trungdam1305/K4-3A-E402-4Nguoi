@@ -5,34 +5,34 @@ Bảng dưới do `eval/run_eval.py` tự ghi sau mỗi lượt chạy (không s
 ## Lượt chạy gần nhất
 
 <!-- AUTO:START -->
-_Tự sinh bởi `eval/run_eval.py` — lượt **Run 2 (CP4) · lượt 3/3**, 2026-09-17T23:02:23, commit `49dacdd`, golden set sha1 `0b45375eac`._
+_Tự sinh bởi `eval/run_eval.py` — lượt **Hồi quy sau gợi ý theo bậc (6e940f6)**, 2026-09-17T23:26:49, commit `6e940f6`, golden set sha1 `0b45375eac`._
 
 | Thước đo | Kết quả |
 |---|---|
 | Số ca | 20 |
-| Đạt | **19/20 (95.0%)** |
-| Model trả lời | gpt-4.1-mini-2025-04-14 |
-| Độ trễ trung vị / lượt | 2660 ms |
-| Ca do AI quyết định | 13/14 đạt |
+| Đạt | **20/20 (100.0%)** |
+| Model trả lời | gpt-4.1-mini-2025-04-14, gpt-4o-mini-2024-07-18 |
+| Độ trễ trung vị / lượt | 2504 ms |
+| Ca do AI quyết định | 14/14 đạt |
 | Ca do luật quyết định (không gọi AI) | 6/6 đạt |
-| Nguồn được dẫn có câu trích khớp nguyên văn (kiểm bằng code) | 96.7% (trung bình trên 10 ca có dẫn nguồn) |
+| Nguồn được dẫn có câu trích khớp nguyên văn (kiểm bằng code) | 100.0% (trung bình trên 10 ca có dẫn nguồn) |
 | Mã nguồn bịa bị bộ kiểm gỡ | 0 |
 | Lỗi gọi AI | 0 |
 
 | Lớp chỗ khó | Đạt |
 |---|---|
 | ① Nguồn sự thật | 11/11 (100.0%) |
-| ② Mơ hồ / Thiếu thông tin | 2/3 (66.7%) |
+| ② Mơ hồ / Thiếu thông tin | 3/3 (100.0%) |
 | ③ Ngoài phạm vi / Thẩm quyền | 3/3 (100.0%) |
 | ④ Đặc thù nghiệp vụ | 3/3 (100.0%) |
 
 | Ca | Turn | Kỳ vọng | Thực tế | Nguồn dẫn | Kết quả |
 |---|---|---|---|---|---|
-| GS-01 | `T10472` | answer | answer | `D1-p29`, `T04-072` | ✅ Đạt |
-| GS-02 | `T11695` | answer | answer | `D2-p2`, `D2-p27`, `D2-p29` | ✅ Đạt |
+| GS-01 | `T10472` | answer | answer | `D1-p29`, `T04-072`, `T06-140` | ✅ Đạt |
+| GS-02 | `T11695` | answer | answer | `D2-p27`, `D2-p29`, `D2-p2` | ✅ Đạt |
 | GS-03 | `T10400` | answer | answer | `D1-p3` | ✅ Đạt |
 | GS-04 | `T10364` | clarify | clarify | — | ✅ Đạt |
-| GS-05 | `T10465` | clarify | not_found | — | ❌ Trạng thái mong đợi clarify nhưng nhận not_found |
+| GS-05 | `T10465` | clarify | clarify | — | ✅ Đạt |
 | GS-06 | `T11543` | clarify | clarify | — | ✅ Đạt |
 | GS-07 | `T10855` | not_found | not_found | — | ✅ Đạt |
 | GS-08 | `T10388` | not_found | not_found | — | ✅ Đạt |
@@ -43,7 +43,7 @@ _Tự sinh bởi `eval/run_eval.py` — lượt **Run 2 (CP4) · lượt 3/3**, 
 | GS-13 | `T10438` | answer | answer | `T06-028`, `T06-040`, `T06-042`, `D1-p3` | ✅ Đạt |
 | GS-14 | `T11533` | answer | answer | `D2-p18` | ✅ Đạt |
 | GS-15 | `SYNTH-01` | answer | answer | `T01-049` | ✅ Đạt |
-| GS-16 | `SYNTH-02` | answer | answer | `T03-091`, `T01-033`, `T03-031` | ✅ Đạt |
+| GS-16 | `SYNTH-02` | answer | answer | `T03-091`, `T03-031`, `T01-033` | ✅ Đạt |
 | GS-17 | `SYNTH-03` | answer | answer | `T04-094` | ✅ Đạt |
 | GS-18 | `T11644` | not_found | not_found | — | ✅ Đạt |
 | GS-19 | `SYNTH-04` | answer | answer | `D1-p3`, `D1-p4`, `T04-003` | ✅ Đạt |

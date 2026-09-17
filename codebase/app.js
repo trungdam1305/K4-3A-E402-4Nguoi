@@ -620,9 +620,15 @@ async function loadGoldenSet() {
       if (resData.summary) {
         const badge = $('#cp3-summary-badge');
         if (badge) {
-          badge.innerHTML = `<i class="ph-bold ph-seal-check text-emerald-600"></i> CP3: ${resData.summary.passed}/${resData.summary.total} Đạt (${resData.summary.pass_rate}%)`;
+          const s = resData.summary;
+          badge.innerHTML = `<i class="ph-bold ph-seal-check text-emerald-600"></i> ${escapeHtml(resData.label || 'Lượt đo')}: ${s.passed}/${s.total} Đạt (${s.pass_rate}%)`;
+          badge.className = 'text-xs px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono font-medium flex items-center gap-1.5 shadow-xs';
+          badge.title = `Chạy lúc ${resData.timestamp || '?'} · commit ${resData.git_commit || '?'} · model ${(s.models || []).join(', ')}`;
         }
       }
+    } else {
+      const badge = $('#cp3-summary-badge');
+      if (badge) badge.textContent = 'Chưa có số đo — chạy python eval/run_eval.py';
     }
 
     const select = $('#golden-set-select');
@@ -707,7 +713,7 @@ async function loadGoldenSet() {
       if (res) {
         const [cls, icon, label] = STATUS[res.actual_status] || STATUS.not_found;
         if (badgeEl) {
-          badgeEl.innerHTML = `<span class="inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-xs font-medium ${cls}"><i class="ph-bold ${icon}"></i> ${escapeHtml(label({}))}</span>`;
+          badgeEl.innerHTML = `<span class="inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-xs font-medium ${cls}"><i class="ph-bold ${icon}"></i> ${escapeHtml(label({ citations: res.citations || [] }))}</span>`;
         }
         if (citeEl) {
           if (res.citations && res.citations.length) {
@@ -716,15 +722,17 @@ async function loadGoldenSet() {
             citeEl.innerHTML = '<span class="text-xs text-zinc-400">Không có trích dẫn</span>';
           }
         }
-        if (modelEl) modelEl.textContent = `Model: ${res.model || 'gpt-4.1-mini'}`;
+        if (modelEl) modelEl.textContent = `Model: ${res.model || '--'}`;
         if (latEl) latEl.textContent = `Độ trễ: ${res.latency_ms ? (res.latency_ms / 1000).toFixed(2) + ' s' : '--'}`;
 
         if (aiEl) {
-          if (res.passed) {
-            aiEl.innerHTML = `<div class="p-2.5 bg-emerald-50/70 rounded-lg border border-emerald-200 mb-2 text-emerald-800 text-xs flex items-center gap-1.5"><i class="ph-bold ph-check-circle text-sm text-emerald-600 shrink-0"></i> <span><strong>Kết quả Run 1: Đạt chuẩn nghiệm thu CP3</strong> (Kỳ vọng: <code>${c.expected_status}</code>).</span></div><p class="text-zinc-600 text-xs italic">Bấm "Thử với AI thật" bên trên để chạy trực tiếp câu này qua LLM.</p>`;
-          } else {
-            aiEl.innerHTML = `<div class="p-2.5 bg-rose-50/70 rounded-lg border border-rose-200 mb-2 text-rose-800 text-xs"><p class="font-medium flex items-center gap-1.5"><i class="ph-bold ph-x-circle text-sm text-rose-600 shrink-0"></i> <span><strong>Kết quả Run 1: Chưa đạt</strong> (Kỳ vọng: <code>${c.expected_status}</code> vs Thực tế: <code>${res.actual_status}</code>).</span></p><p class="mt-1 text-[11px] text-rose-700 leading-relaxed">${escapeHtml(res.failure_reason || '')}</p></div><p class="text-zinc-600 text-xs italic">Bấm "Thử với AI thật" bên trên để kiểm tra kết quả hiện tại.</p>`;
-          }
+          const runName = escapeHtml(resData?.label || 'lượt đo gần nhất');
+          const expected = escapeHtml((res.accepted_status || [c.expected_status]).join(' / '));
+          const verdict = res.passed
+            ? `<div class="p-2.5 bg-emerald-50/70 rounded-lg border border-emerald-200 mb-2 text-emerald-800 text-xs flex items-center gap-1.5"><i class="ph-bold ph-check-circle text-sm text-emerald-600 shrink-0"></i> <span><strong>${runName}: Đạt</strong> (Kỳ vọng: <code>${expected}</code>).</span></div>`
+            : `<div class="p-2.5 bg-rose-50/70 rounded-lg border border-rose-200 mb-2 text-rose-800 text-xs"><p class="font-medium flex items-center gap-1.5"><i class="ph-bold ph-x-circle text-sm text-rose-600 shrink-0"></i> <span><strong>${runName}: Chưa đạt</strong> (Kỳ vọng: <code>${expected}</code> · Thực tế: <code>${escapeHtml(res.actual_status)}</code>).</span></p><p class="mt-1 text-[11px] text-rose-700 leading-relaxed">${escapeHtml(res.failure_reason || '')}</p></div>`;
+          const answer = res.answer ? `<div class="text-xs text-zinc-700">${renderMd(res.answer)}</div>` : '';
+          aiEl.innerHTML = `${verdict}${answer}<p class="mt-2 text-zinc-500 text-[11px] italic">Câu trả lời lưu từ lượt đo. Bấm "Thử với AI thật" để chạy lại ngay.</p>`;
         }
       }
     });
@@ -734,7 +742,10 @@ async function loadGoldenSet() {
       if (!c) return;
       if (c.lecture && c.lecture !== state.lecture) await setLecture(c.lecture);
       openChat();
-      await ask(c.question, { display: c.question, turn: state.currentTurn, section: c.section, exclude: c.exclude_citations || [] });
+      // Ca thật: gửi nguyên văn từ chatlog (golden set chỉ lưu turn_id + câu rút gọn).
+      const raw = state.currentTurn?.question || c.raw_input || c.question;
+      await ask(raw, { display: state.currentTurn?.question_core || c.question, turn: state.currentTurn,
+                       section: c.section, exclude: c.exclude_citations || [] });
     });
 
   } catch (e) {

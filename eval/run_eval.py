@@ -63,8 +63,9 @@ def evaluate_case(case: dict, result: dict) -> dict:
         "flags": flags,
         "citations": citations,
         "removed_citations": removed,
+        "mode": result.get("mode"),
         "verified_quotes": result.get("verified_quotes", []),
-        "quote_grounding_rate": result.get("quote_grounding_rate", 1.0),
+        "quote_grounding_rate": result.get("quote_grounding_rate"),
         "passed": not reasons,
         "failure_reason": " · ".join(reasons) or None,
         "model": result.get("model"),
@@ -86,8 +87,12 @@ def summarize(rows: list, duration_s: float) -> dict:
         st["pass_rate"] = round(100 * st["passed"] / st["total"], 1)
     passed = sum(r["passed"] for r in rows)
     latencies = sorted(r["latency_ms"] for r in rows if r["latency_ms"])
-    quote_rates = [r.get("quote_grounding_rate", 1.0) for r in rows if r.get("citations")]
-    avg_quote_rate = round(100 * sum(quote_rates) / len(quote_rates), 1) if quote_rates else 100.0
+    # Tỷ lệ nguồn được dẫn có câu trích khớp nguyên văn, chỉ tính trên các ca có dẫn nguồn.
+    quote_rates = [r["quote_grounding_rate"] for r in rows if r.get("quote_grounding_rate") is not None]
+    avg_quote_rate = round(100 * sum(quote_rates) / len(quote_rates), 1) if quote_rates else None
+    # Ca quyết định bằng luật (không gọi AI) báo riêng với ca do AI trả lời.
+    by_rule = [r for r in rows if r.get("mode") in ("rule", "catalog_rule")]
+    by_ai = [r for r in rows if r not in by_rule]
     return {
         "total": len(rows), "passed": passed, "failed": len(rows) - passed,
         "pass_rate": round(100 * passed / len(rows), 1) if rows else 0,
@@ -95,6 +100,9 @@ def summarize(rows: list, duration_s: float) -> dict:
         "median_latency_ms": latencies[len(latencies) // 2] if latencies else None,
         "removed_citations_total": sum(len(r["removed_citations"]) for r in rows),
         "avg_quote_rate": avg_quote_rate,
+        "quote_rate_cases": len(quote_rates),
+        "rule_cases": len(by_rule), "rule_passed": sum(r["passed"] for r in by_rule),
+        "ai_cases": len(by_ai), "ai_passed": sum(r["passed"] for r in by_ai),
         "errors": sum(1 for r in rows if r["actual_status"] in ("error", None) or r["error"]),
         "models": sorted({r["model"] for r in rows if r["model"]}),
         "layer_stats": layers,
@@ -113,7 +121,11 @@ def render_markdown(run: dict) -> str:
         f"| Đạt | **{s['passed']}/{s['total']} ({s['pass_rate']}%)** |",
         f"| Model trả lời | {', '.join(s['models']) or '—'} |",
         f"| Độ trễ trung vị / lượt | {s['median_latency_ms']} ms |",
-        f"| Tỷ lệ câu trích nguyên văn hợp lệ | **{s.get('avg_quote_rate', 100.0)}%** (kiểm bằng code) |",
+        f"| Ca do AI quyết định | {s['ai_passed']}/{s['ai_cases']} đạt |",
+        f"| Ca do luật quyết định (không gọi AI) | {s['rule_passed']}/{s['rule_cases']} đạt |",
+        f"| Nguồn được dẫn có câu trích khớp nguyên văn (kiểm bằng code) | "
+        f"{'—' if s['avg_quote_rate'] is None else str(s['avg_quote_rate']) + '%'} "
+        f"(trung bình trên {s['quote_rate_cases']} ca có dẫn nguồn) |",
         f"| Mã nguồn bịa bị bộ kiểm gỡ | {s['removed_citations_total']} |",
         f"| Lỗi gọi AI | {s['errors']} |",
         "",

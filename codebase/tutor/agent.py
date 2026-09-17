@@ -97,20 +97,16 @@ def normalize_text_for_quote(s: str) -> str:
     return " ".join(s.split())
 
 
-def verify_exact_quotes(quote_citations: list, source_chunks: dict, allowed_ids: set) -> tuple[list, float]:
+def verify_exact_quotes(quote_citations: list, source_chunks: dict, allowed_ids: set) -> list:
     """Kiểm tra bằng code xem câu trích có thật sự nằm trong đoạn tài liệu tương ứng không.
 
-    Trả về (verified_quotes, quote_grounding_rate).
+    Trả về danh sách {id, quote, verified}; câu trích không khớp được giữ với verified=False.
     """
-    if not quote_citations:
-        return [], 1.0
-
     verified = []
-    total_valid_cites = 0
-    for item in quote_citations:
+    for item in quote_citations or []:
         if not isinstance(item, dict):
             continue
-        cid = (item.get("id") or "").strip()
+        cid = (item.get("id") or "").strip().strip("[]").strip()
         cid = re.sub(r"^(D\d)-P(\d+)$", r"\1-p\2", cid, flags=re.I)
         m_deck = re.match(r"^(D\d)[-·]?[pP](\d+)$", cid)
         if m_deck:
@@ -121,7 +117,6 @@ def verify_exact_quotes(quote_citations: list, source_chunks: dict, allowed_ids:
         quote = (item.get("quote") or "").strip()
         if not cid or cid not in allowed_ids or not quote:
             continue
-        total_valid_cites += 1
 
         raw_chunk_text = source_chunks.get(cid, "")
         norm_source = normalize_text_for_quote(raw_chunk_text)
@@ -143,12 +138,15 @@ def verify_exact_quotes(quote_citations: list, source_chunks: dict, allowed_ids:
 
         # Câu trích không có trong đoạn tài liệu gốc
         verified.append({"id": cid, "quote": quote, "verified": False})
+    return verified
 
-    grounding_rate = (
-        round(sum(1 for v in verified if v["verified"]) / total_valid_cites, 2)
-        if total_valid_cites > 0 else 1.0
-    )
-    return verified, grounding_rate
+
+def quote_coverage(verified_quotes: list, cited: list):
+    """Tỷ lệ nguồn được dẫn có ít nhất một câu trích khớp nguyên văn; None nếu không dẫn nguồn nào."""
+    if not cited:
+        return None
+    ok = {v["id"] for v in verified_quotes if v["verified"]}
+    return round(len(ok & set(cited)) / len(set(cited)), 2)
 
 
 def check_citations(text: str, allowed: set, default_deck: str = ""):
@@ -272,7 +270,7 @@ class Tutor:
                 "where_ids": [],
                 "removed_citations": [],
                 "verified_quotes": [],
-                "quote_grounding_rate": 1.0,
+                "quote_grounding_rate": None,
             })
             return self._finish(result, question, t0, {}, retrieval_ms)
 
@@ -287,7 +285,7 @@ class Tutor:
             raw = None
 
         raw_chunk_map = {c.id: c.text for c, _ in in_scope + other}
-        verified_quotes, quote_grounding_rate = [], 1.0
+        verified_quotes, quote_grounding_rate = [], None
         if raw is not None:
             answer, cited, removed = check_citations(raw.get("answer", ""), allowed_answer, default_deck)
             where, where_ids, removed2 = check_citations(raw.get("where_to_look", ""), allowed_all, default_deck)
@@ -319,15 +317,9 @@ class Tutor:
 
             # Kiểm tra trích dẫn nguyên văn bằng code Python (0 token, 0 ms gọi AI)
             raw_quotes = raw.get("quote_citations") or []
-            verified_quotes, quote_grounding_rate = verify_exact_quotes(raw_quotes, raw_chunk_map, allowed_answer)
-            # Tự động trích xuất câu văn tiêu biểu cho các nguồn slide chưa có quote để phục vụ highlight trên slide
-            for cid in cited:
-                if not any(vq["id"] == cid and vq["verified"] for vq in verified_quotes):
-                    chunk_text = raw_chunk_map.get(cid, "")
-                    if chunk_text:
-                        sents = [s.strip() for s in re.split(r"[.\n;]+", chunk_text) if len(s.strip()) > 15]
-                        if sents:
-                            verified_quotes.append({"id": cid, "quote": sents[0][:120], "verified": True, "auto_extracted": True})
+            verified_quotes = verify_exact_quotes(raw_quotes, raw_chunk_map, set(cited))
+            # Nguồn không có câu trích khớp thì chỉ mở đúng trang/đoạn, không tự chọn câu để tô sáng.
+            quote_grounding_rate = quote_coverage(verified_quotes, cited)
 
             if not re.sub(r"\[[^\]]*\]|[\s,.;:]", "", where):  # where_to_look chỉ toàn mã nguồn
                 where = "" if status == "answer" or not where else "Xem thêm: " + where
@@ -362,7 +354,7 @@ class Tutor:
                 "reason": "Câu hỏi đòi bỏ qua quy tắc hoặc tiết lộ system prompt, nên bị chặn bằng luật cứng "
                           "trước khi gửi tới AI.",
                 "clarify_options": [], "where_to_look": "", "citations": [], "where_ids": [],
-                "removed_citations": [], "verified_quotes": [], "quote_grounding_rate": 1.0}
+                "removed_citations": [], "verified_quotes": [], "quote_grounding_rate": None}
 
     def _build_prompt(self, lecture, core, section, ctx, in_scope, other, history):
         def block(hits):
@@ -409,7 +401,7 @@ class Tutor:
     def _fallback(self, in_scope, error):
         """Không có key hoặc mọi model đều lỗi: không tự trả lời — chỉ chỉ ra đoạn tài liệu khớp từ khoá nhất."""
         base = {"mode": "retrieval-only", "error": error, "clarify_options": [], "where_to_look": "",
-                "where_ids": [], "removed_citations": [], "verified_quotes": [], "quote_grounding_rate": 1.0}
+                "where_ids": [], "removed_citations": [], "verified_quotes": [], "quote_grounding_rate": None}
         if in_scope and in_scope[0][1] >= FALLBACK_MIN_SCORE:
             top = in_scope[:3]
             return {**base, "status": "search_only", "citations": [c.id for c, _ in top],

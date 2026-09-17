@@ -871,9 +871,11 @@ function renderRun(bubble, run) {
   if (run.flags.includes('catalog_policy')) badges.push('<span class="border rounded-md px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200"><i class="ph ph-shield-check"></i> Bảng ánh xạ tài liệu</span>');
   if (run.excluded.length) badges.push(`<span class="border rounded-md px-2 py-0.5 bg-zinc-100 text-zinc-600 border-zinc-200">Bỏ nguồn ${run.excluded.map(escapeHtml).join(', ')}</span>`);
   if (run.verified_quotes?.length && run.citations?.length) {
-    const verifiedCount = run.verified_quotes.filter(v => v.verified).length;
+    // Đếm theo mã nguồn riêng biệt: mỗi nguồn được dẫn có ít nhất một câu trích khớp nguyên văn.
+    const cited = new Set(run.citations);
+    const verifiedCount = new Set(run.verified_quotes.filter(v => v.verified && cited.has(v.id)).map(v => v.id)).size;
     if (verifiedCount > 0) {
-      badges.push(`<span class="border rounded-md px-2 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200"><i class="ph-bold ph-seal-check"></i> Câu trích kiểm bằng code: ${verifiedCount}/${run.citations.length}</span>`);
+      badges.push(`<span class="border rounded-md px-2 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200"><i class="ph-bold ph-seal-check"></i> Nguồn có câu trích khớp nguyên văn: ${verifiedCount}/${cited.size}</span>`);
     }
   }
 

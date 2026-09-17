@@ -1,50 +1,66 @@
-"""Bảng ánh xạ 'phần đang học → tài liệu' do người soạn (Curated Section Catalog).
+"""Bảng ánh xạ 'phần đang học → tài liệu' do người soạn (curated section catalog).
 
-Giải quyết vấn đề LLM tự đoán nhầm (đặc biệt lỗi GS-11, GS-12):
-- Xác định rõ ràng phần nào KHÔNG CÓ trong data pack hackathon (lab môi trường, repo, link, nộp bài).
-- Xác định phần ôn tập/quiz tổng hợp cần yêu cầu học viên nêu rõ câu hỏi (tránh đoán mò).
-- Cung cấp định tuyến chính xác 100% bằng code (deterministic routing), 0 token, 0 ms độ trễ.
+Tên phần lấy từ tiền tố câu hỏi K4 (K4P1 D01/D03) trong chatlog, đối chiếu tay với slide Day 1–2 và
+đề mục transcript. Luật chỉ áp dụng khi phần đang học có trong bảng VÀ câu hỏi trỏ vào chính phần đó
+("phần/lab/câu này", "ở đây") hoặc hỏi thao tác lab / đáp án — còn lại để AI quyết định.
+Không có câu trả lời hay lựa chọn viết sẵn theo từng ca kiểm thử.
 """
 import re
 
-# Các phần lab thực hành / thao tác môi trường / repo KHÔNG có trong tài liệu data pack Day 1 & Day 2.
-OUT_OF_PACK_LAB_SECTIONS = {
-    "tạo môi trường và chạy test baseline",
-    "tao moi truong va chay test baseline",
+# Phần thực hành / hướng dẫn / tài liệu riêng KHÔNG có trong slide + transcript của data pack.
+OUT_OF_PACK_SECTIONS = {
+    # Day 1
     "mở đúng repo và nhìn thấy đích đến",
-    "mo dung repo va nhin thay dich den",
+    "lấy repo và nhìn thấy đích đến",
+    "dựng môi trường và chạy test baseline",
+    "tạo môi trường và chạy test baseline",
     "task 1.1 — gọi model và đo độ trễ",
-    "task 1.1 — goi model va do do tre",
-    "task 1.2",
-    "task 1.3",
-    "task 2.1",
-    "task 2.2",
-    "cài đặt môi trường",
-    "cai dat moi truong",
-    "hướng dẫn nộp bài",
-    "huong dan nop bai",
-    "clone repo",
+    "code gợi ý: task 1.1 — gọi model và đo độ trễ",
+    "task 1.2 — tái sử dụng cho model nhỏ hơn",
+    "task 1.3 — so sánh hai model trên cùng một prompt",
+    "hoàn thành task 1: gọi gpt-4o và đo latency",
+    "part 2 — system prompt, token và chi phí",
+    "code gợi ý: part 2 — system prompt, token và chi phí",
+    "part 3 — streaming, history và retry",
+    "part 4 — ghép thành trợ lý cli",
+    "bonus — cho bạn nào xong sớm",
+    "trả lời exercises, tự chấm và nộp bài",
+    "nộp bài và đánh giá lab",
+    # Day 2
+    '📖 "sổ tay từ điển" bỏ túi cho người mới (non-tech dictionary)',
+    'phần 1: chuẩn bị "bàn làm việc" (khoảng 15 phút)',
+    "phần 2: scan cá nhân — tìm ít nhất 5 vấn đề thật (khoảng 25 phút)",
+    "phần 3: chọn top 3 problem card + vẽ workflow nháp (khoảng 35 phút)",
+    "phần 5: kiểm chứng nhanh + research giải pháp đã có (khoảng 30 phút)",
+    "phần 9: đóng gói và nộp bài",
+    "day 02_ ai product lab",
+    "day 02_ ai product lab (2)",
+    "day 02_c401_ai product lab",
+    "checklist tự kiểm tra trước khi đóng máy",
 }
 
-# Regex nhận diện các từ khoá chỉ lab thực hành / kỹ thuật lab không có tài liệu
-OUT_OF_PACK_KEYWORDS = re.compile(
-    r"\b(?:tạo môi trường|chạy test baseline|clone repo|link repo|bị 404|pip install|cài đặt thư viện|nộp bài|pull request|mở đúng repo)\b",
-    re.I
-)
-
-# Từ chỉ thị trỏ vào phần/lab/chỗ đang học
-DEICTIC_PATTERN = re.compile(
-    r"\b(?:phần|lab|bài|task|mục|slide|video|đoạn|chỗ|cái)(?:\s+\w+)?\s+(?:này|đó|kia)\b|ở\s+đây",
-    re.I
-)
-
-# Mục ôn tập tổng hợp (nếu hỏi "câu này" hoặc "đáp án" mà không có đoạn trích thì cần clarify)
-QUIZ_REVIEW_SECTIONS = {
+# Mục ôn tập / quiz: nhiều câu hỏi trong một phần, không biết "câu này" là câu nào.
+REVIEW_SECTIONS = {
+    "quiz cuối ngày",
     "ôn toàn bộ câu hỏi",
-    "on toan bo cau hoi",
-    "quiz ôn tập",
-    "ôn tập tổng hợp",
+    "luyện theo đề xuất",
+    "kiến thức trọng tâm",
 }
+
+# Câu hỏi trỏ vào chính phần đang học.
+DEICTIC_PATTERN = re.compile(
+    r"\b(?:phần|lab|bài|task|mục|slide|video|đoạn|chỗ|cái|câu|nội dung)(?:\s+\w+)?\s+(?:này|đó|kia|trên)\b|ở\s+đây",
+    re.I,
+)
+# Thao tác lab / hành chính mà tài liệu học không trả lời được.
+LAB_OPS_PATTERN = re.compile(
+    r"\b(?:clone repo|link repo|repo bị|bị 404|pip install|cài thư viện|nộp bài|pull request|fork repo)\b",
+    re.I,
+)
+ASKS_ANSWER = re.compile(r"\bđáp án\b", re.I)
+
+NO_POLICY = {"is_known_out_of_pack": False, "force_status": None, "section_match": None,
+             "answer": "", "reason": "", "where_to_look": "", "clarify_options": []}
 
 
 def normalize_section_name(name: str) -> str:
@@ -53,107 +69,33 @@ def normalize_section_name(name: str) -> str:
 
 
 def get_section_policy(section: str, question: str, has_selected: bool = False) -> dict:
-    """Phân tích chính sách tài liệu cho phần đang học.
-
-    Trả về dict:
-    - is_known_out_of_pack: bool (phần chắc chắn không có tài liệu trong pack)
-    - force_status: "not_found" | "clarify" | None
-    - answer: câu trả lời chuẩn (nếu force)
-    - reason: lý do giải thích cho học viên và giám khảo
-    - where_to_look: gợi ý chỗ tìm
-    """
+    """Trả chính sách cho phần đang học; force_status = None nghĩa là để AI quyết định."""
     sec_norm = normalize_section_name(section)
-    q_norm = question.strip().lower()
+    if not sec_norm or has_selected:
+        return dict(NO_POLICY)
+    deictic = bool(DEICTIC_PATTERN.search(question))
 
-    # 1. Kiểm tra phần lab không có trong data pack
-    is_out_lab = sec_norm in OUT_OF_PACK_LAB_SECTIONS or any(k in sec_norm for k in ["test baseline", "đúng repo", "task 1."])
-    if not is_out_lab and OUT_OF_PACK_KEYWORDS.search(sec_norm):
-        is_out_lab = True
+    if sec_norm in OUT_OF_PACK_SECTIONS and (deictic or LAB_OPS_PATTERN.search(question)):
+        return {
+            **NO_POLICY,
+            "is_known_out_of_pack": True,
+            "force_status": "not_found",
+            "section_match": "khong_khop",
+            "answer": (f"Tài liệu của trợ giảng (slide và transcript Day 1–2) chưa có nội dung của phần “{section}”, "
+                       "nên mình không trả lời để tránh đoán sai bước làm."),
+            "reason": (f"Phần “{section}” là hướng dẫn thực hành / tài liệu riêng, không nằm trong slide và transcript "
+                       "mà trợ giảng được dùng (bảng ánh xạ phần học soạn tay)."),
+            "where_to_look": f"Xem hướng dẫn của phần “{section}” ngay trên VLearn, hoặc hỏi giảng viên/TA.",
+        }
 
-    if is_out_lab:
-        # Nếu câu hỏi trỏ vào lab này ("phần này", "ở đây", "dùng để làm gì", "làm gì ở đây", "lỗi", "link", "chạy")
-        is_asking_lab = (
-            bool(DEICTIC_PATTERN.search(question))
-            or bool(OUT_OF_PACK_KEYWORDS.search(question))
-            or any(k in q_norm for k in ["dùng để làm gì", "làm gì", "như thế nào", "tại sao cần", "bị 404", "error", "lỗi", "import"])
-        )
-        if is_asking_lab:
-            return {
-                "is_known_out_of_pack": True,
-                "force_status": "not_found",
-                "section_match": "khong_khop",
-                "answer": (
-                    f"Tài liệu bài đang học chưa có nội dung của phần “{section}” (đây là phần thực hành thao tác lab/repo). "
-                    f"Mình không trả lời bằng kiến thức ngoài tài liệu để tránh làm bạn nhầm lẫn bước làm."
-                ),
-                "reason": (
-                    f"Phần “{section}” là bài tập thực hành/môi trường không có tài liệu trong data pack Day 1–2. "
-                    f"Được chặn trực tiếp bằng Bảng ánh xạ tài liệu do người soạn để tránh mượn lab khác."
-                ),
-                "where_to_look": f"Xem hướng dẫn chi tiết của phần “{section}” ngay trên VLearn hoặc hỏi trợ giảng (TA).",
-            }
+    if sec_norm in REVIEW_SECTIONS and (deictic or ASKS_ANSWER.search(question)):
+        return {
+            **NO_POLICY,
+            "force_status": "clarify",
+            "section_match": "khong_ap_dung",
+            "answer": (f"Bạn đang hỏi câu nào trong phần “{section}”? Hãy dán nội dung câu hỏi, hoặc khoanh vùng câu đó "
+                       "trên slide, để mình tìm đúng trang trong tài liệu."),
+            "reason": "Phần ôn tập có nhiều câu; câu hỏi chưa nói rõ câu nào nên mình hỏi lại thay vì đoán.",
+        }
 
-    # 2. Kiểm tra mục ôn tập tổng hợp khi học viên hỏi chung chung không có câu hỏi cụ thể
-    if sec_norm in QUIZ_REVIEW_SECTIONS and not has_selected:
-        # Nếu hỏi về đáp án, câu này, đọc slide nào...
-        if re.search(r"\b(?:đáp án|câu này|chọn câu nào|đọc (?:ở )?slide nào|slide nào)\b", q_norm):
-            return {
-                "is_known_out_of_pack": False,
-                "force_status": "clarify",
-                "section_match": "khong_ap_dung",
-                "answer": "Bạn đang ở mục Ôn toàn bộ câu hỏi. Bạn muốn hỏi về câu hỏi quiz nào? Vui lòng dán câu hỏi hoặc dùng chuột khoanh vùng câu đó trên slide để mình hỗ trợ nhé.",
-                "clarify_options": [
-                    "Đáp án của câu hỏi về Temperature là gì?",
-                    "Câu hỏi về quy trình xác định bài toán AI có đáp án nào đúng?",
-                    "Nên đọc slide nào để ôn tập phần Transformer?"
-                ],
-                "reason": "Câu hỏi hỏi về 'câu này/slide nào' trong mục ôn tập nhưng chưa có câu hỏi cụ thể hoặc đoạn bôi đen.",
-                "where_to_look": "",
-            }
-
-    # 3. Câu hỏi cụt ngủn hoặc thiếu ngữ cảnh (Layer ②: Mơ hồ / Thiếu thông tin)
-    if not has_selected:
-        q_clean = re.sub(r"[^\w\s]", "", question).strip().lower()
-        q_words = q_clean.split()
-        # 3a. Một từ khoá trơn kèm dấu hỏi (vd. "context ?", "prompt ?")
-        if len(q_words) == 1 and ("?" in question or len(question.strip()) <= 15):
-            word = q_words[0]
-            return {
-                "is_known_out_of_pack": False,
-                "force_status": "clarify",
-                "section_match": "khong_ap_dung",
-                "answer": f"Bạn đang muốn tìm hiểu khía cạnh nào về “{word}”? Bạn có thể chọn câu hỏi gợi ý bên dưới hoặc khoanh vùng đoạn bạn đang xem trên slide nhé.",
-                "clarify_options": [
-                    f"Khái niệm {word} trong sinh văn bản là gì?",
-                    f"Vai trò của {word} đối với chất lượng đầu ra của mô hình?",
-                    f"{word.capitalize()} có giới hạn dung lượng thế nào?"
-                ],
-                "reason": f"Câu hỏi chỉ gồm một từ khoá đơn lẻ '{word}' nên cần làm rõ học viên muốn hỏi khía cạnh nào.",
-                "where_to_look": "",
-            }
-
-        # 3b. Các câu yêu cầu tiếp diễn mơ hồ mà không có lịch sử hội thoại trước (vd. "chi tiết hơn", "nói rõ hơn")
-        if q_clean in ["chi tiết hơn", "chi tiet hon", "nói rõ hơn", "noi ro hon", "cụ thể hơn", "cu the hon", "rõ hơn", "ro hon"]:
-            sec_desc = f" của phần “{section}”" if section else ""
-            return {
-                "is_known_out_of_pack": False,
-                "force_status": "clarify",
-                "section_match": "khong_ap_dung",
-                "answer": f"Bạn muốn mình giải thích chi tiết hơn về nội dung cụ thể nào{sec_desc}? Vui lòng chọn bên dưới hoặc bôi đen vị trí trên slide nhé.",
-                "clarify_options": [
-                    "Tóm tắt các mốc sự kiện chính theo trình tự thời gian",
-                    "Ý nghĩa và tác động của giai đoạn này đối với AI hiện đại",
-                    "Các thuật ngữ kỹ thuật cốt lõi được nhắc tới trong phần này"
-                ],
-                "reason": "Câu hỏi 'chi tiết hơn' mơ hồ và không kèm ngữ cảnh bôi đen hoặc câu hỏi trước đó.",
-                "where_to_look": "",
-            }
-
-    return {
-        "is_known_out_of_pack": False,
-        "force_status": None,
-        "section_match": None,
-        "answer": "",
-        "reason": "",
-        "where_to_look": "",
-    }
+    return dict(NO_POLICY)

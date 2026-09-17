@@ -64,19 +64,21 @@ Thanh "Câu hỏi thật của K4" phát lại các lượt thật trong chatlog
 |---|---|---|
 | Happy | `chuẩn · …` (T10472, T10400, T11533) | Trả lời ngắn, mỗi ý có thẻ nguồn; slide/transcript tự mở đúng chỗ |
 | Low-confidence | `mơ hồ · …` (T10364, T10465) | Hỏi lại một câu, có 2–3 lựa chọn bấm được; bấm thì giữ nguyên "phần đang học" |
-| Failure | `khó · …` (T10288, T10855, T11020) | Phần lab/code không có trong tài liệu, hoặc prompt injection: nói rõ "không có trong tài liệu bài này" và chỉ chỗ tìm, không bịa |
+| Failure | `khó · …` (T10288, T10855, T11020) | Phần lab/code không có trong tài liệu: nói rõ "không có trong tài liệu bài này" và chỉ chỗ tìm, không bịa. Prompt injection (T11020): bị chặn bằng luật trước khi gọi AI, trả câu từ chối cố định |
 | Correction | `sửa nguồn · …` (T11695) | Trả lời xong thì tự bấm ⚑ ở nguồn đầu tiên; agent tìm lại, bỏ nguồn đó |
 
 Nút "Lượt K4 ngẫu nhiên chưa có trích dẫn" bốc một câu thật mà tutor cũ đã trả lời không có nguồn. Nút này dùng để thử trên dữ liệu mình chưa chọn trước.
 
 ## Luồng agent (`tutor/agent.py`)
 
-1. **Tách ngữ cảnh.** VLearn tự chèn tiền tố vào câu hỏi: `(Đang học phần “…”)`, `(Trang N, đoạn được chọn: "…")`. Bước này tách tiền tố đó ra, và đánh dấu câu có dấu hiệu prompt injection.
+1. **Tách ngữ cảnh.** VLearn tự chèn tiền tố vào câu hỏi: `(Đang học phần “…”)`, `(Trang N, đoạn được chọn: "…")`. Bước này tách tiền tố đó ra.
+   Câu hỏi dính luật prompt injection (đòi bỏ quy tắc, tiết lộ system prompt) bị **chặn ngay tại đây**: trả câu từ chối cố định, không tra cứu, không gọi AI. Lịch sử chat gửi lên cũng được lọc bỏ các câu như vậy.
 2. **Tra cứu.** Lấy 6 đoạn khớp nhất trong **bài đang học** và 3 đoạn ở **bài khác**. Đoạn ở bài khác chỉ dùng để chỉ đường, không được làm căn cứ.
 3. **Gọi LLM, trả về JSON theo schema cố định:** `section_match` (tài liệu có đúng phần đang học không), `status` (`answer` / `clarify` / `not_found`), `answer`, `clarify_options`, `where_to_look`, `reason`. Trường `reason` hiện dưới câu trả lời ở dòng "Vì sao".
 4. **Luật cứng cho câu trỏ vào "phần này / lab này / ở đây".** Nếu model đánh giá `section_match = khong_khop` thì kết quả bị ép thành `not_found`, để không mượn tài liệu của phần khác trả lời thay.
 5. **Kiểm mã nguồn.** Mã nào không nằm trong danh sách đoạn đã tra thì bị gỡ và báo lên giao diện. Câu `answer` không còn mã hợp lệ nào thì chuyển thành `ungrounded`: giao diện ẩn câu trả lời và hiện cảnh báo.
-6. **Không có AI** (không có key, hoặc mọi model đều lỗi): trả `search_only` (chỉ liệt kê đoạn khớp từ khoá, không tự trả lời). Câu có dấu hiệu injection vẫn bị chặn bằng luật cố định.
+6. **Câu `not_found`** không gắn nguồn như một câu trả lời: mã model lỡ dẫn được chuyển xuống "Gợi ý chỗ tìm". Nếu model không chỉ được đoạn tài liệu cụ thể nào, "Gợi ý chỗ tìm" là câu cố định (hướng dẫn của phần trên VLearn hoặc giảng viên/TA), không để model gợi ý tài liệu ngoài khoá.
+7. **Không có AI** (không có key, hoặc mọi model đều lỗi): trả `search_only` (chỉ liệt kê đoạn khớp từ khoá, không tự trả lời).
 
 Mỗi lượt được ghi vào `codebase/logs/runs.jsonl`: câu hỏi, các đoạn đã tra kèm điểm, mã được dẫn, mã bị gỡ, model, độ trễ. File này dùng làm đầu vào cho `eval/`.
 

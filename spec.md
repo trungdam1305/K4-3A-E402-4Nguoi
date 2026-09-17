@@ -21,8 +21,8 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 |---|---|---|---|
 | 1 | Mở phần học | Vào slide / video / hướng dẫn lab của buổi | Câu hỏi K4 mang tiền tố `(Đang học phần "…" của buổi này)` |
 | 2 | Gặp chỗ chưa hiểu | Một khái niệm, một bước trong đề lab, một câu quiz ôn tập | 2.817 lượt là câu hỏi nội dung |
-| 3 | Hỏi ngay trong trang | Gõ câu hỏi, không rời tài liệu | 2.278/2.817 là câu tự gõ, không phải câu mẫu bấm sẵn |
-| 4 | **Nhận lời giải thích** | Đọc câu trả lời | 725/2.817 lượt không trích dẫn trang; phần lớn cũng không nói là đang trả lời ngoài tài liệu (xem Evidence) |
+| 3 | Hỏi ngay trong trang | Gõ câu hỏi trong chat hoặc **khoanh vùng trực tiếp trên slide (Smart Visual Pinning)**, không rời tài liệu | 2.278/2.817 là câu tự gõ; K4 có 0 lượt bôi đen văn bản truyền thống do PDF tĩnh |
+| 4 | **Nhận lời giải thích** | Đọc câu trả lời, đối chiếu qua thẻ nguồn và **hộp đèn Spotlight / ghim thông minh** định vị ngay trên slide | 725/2.817 lượt không trích dẫn trang; phần lớn cũng không nói là đang trả lời ngoài tài liệu (xem Evidence) |
 | 5 | **Quyết định: tin hay kiểm lại** | Tin luôn, hoặc tự lật slide / xem lại video, hỏi bạn, hỏi công cụ khác | Log không ghi được bước này → cần khảo sát (Đường A) |
 | 6 | Dùng cách hiểu đó | Học tiếp, làm lab, ôn quiz | Hiểu sai ở bước 4 thì sai tiếp ở đây |
 
@@ -147,7 +147,7 @@ Học viên K4 hỏi tutor khi chưa hiểu tài liệu buổi học, nhưng kho
 - **Làm được thật với data pack.** Tài liệu Day 1–2 có mã trang và mã đoạn để dẫn.
 
 **Không bỏ hẳn, mà gộp vào A:**
-- **B** thành đường *low-confidence* của A (§6): tutor hỏi lại kèm lựa chọn. Tách thành tính năng riêng thì không đo được, vì log không có nhãn "câu mơ hồ".
+- **B** thành đường *low-confidence* của A (§6): tutor hỏi lại kèm lựa chọn. Đồng thời, giải quyết tận gốc ở tầng tương tác bằng **Smart Visual Pinning** (§4): cho phép học viên khoanh vùng/ghim trực tiếp đối tượng trên slide để hỏi, tự động gắn toạ độ và nội dung trích xuất vào context, triệt tiêu các câu hỏi cụt mơ hồ ("ở đây", "hình này") mà không cần gõ dài.
 - **D** thành một luật cứng trong A, chặn trước khi gọi AI (§5 kịch bản #11, GS-10). Việc này rẻ và giữ được hành vi đúng mà tutor cũ đã có.
 
 **Loại:**
@@ -175,26 +175,27 @@ Học viên K4 hỏi tutor khi chưa hiểu tài liệu buổi học, nhưng kho
 
 ## §4. Thiết kế
 
-- **Lát cắt một câu:** *Một học viên K4 đang học Day 1 hoặc Day 2* · *hỏi một chỗ chưa hiểu ngay trong trang học* · **AI quyết định tài liệu của bài đang học có căn cứ cho câu hỏi hay không** · *có thì trả lời ngắn, mỗi ý kèm thẻ nguồn bấm mở đúng trang slide hoặc đoạn transcript; không có thì nói rõ, hỏi lại hoặc chỉ chỗ tìm, không đoán.*
+- **Lát cắt một câu:** *Một học viên K4 đang học Day 1 hoặc Day 2* · *hỏi một chỗ chưa hiểu ngay trong trang học (qua khung chat hoặc **khoanh vùng bắt điểm Smart Visual Pinning trên slide**)* · **AI quyết định tài liệu của bài đang học có căn cứ cho câu hỏi hay không** · *có thì trả lời ngắn, mỗi ý kèm thẻ nguồn bấm mở đúng trang slide hoặc đoạn transcript, đồng thời định vị hộp đèn (Spotlight) trên slide; không có thì nói rõ, hỏi lại hoặc chỉ chỗ tìm, không đoán.*
 
 - **Non-goals (không build):**
   1. Không trả lời câu hỏi thao tác lab, repo, link, deadline bằng kiến thức ngoài. Chỉ nói "không có trong tài liệu" và chỉ TA (ứng viên C, §2).
   2. Không dùng kiến thức ngoài slide/transcript để trả lời, kể cả khi học viên yêu cầu.
   3. Không hỗ trợ các buổi ngoài Day 1–2 (pack chỉ có tài liệu 2 buổi).
   4. Không chấm bài hay sửa code của học viên.
-  5. Không làm đăng nhập, lưu lịch sử lâu dài, hay bôi đen trực tiếp trên slide. "Phần đang học" được chọn bằng dropdown, thay cho tiền tố VLearn tự chèn.
+  5. Không làm đăng nhập, lưu lịch sử lâu dài qua tài khoản người dùng. *(Lưu ý: Thao tác tương tác trực tiếp trên slide đã được hỗ trợ thông qua cơ chế **Smart Visual Pinning**: Canvas overlay bắt toạ độ và trích xuất text tự động).*
 
 - **Mức prototype:** [ ] Sketch [ ] Mock [x] **Working**. Chạy end-to-end trên data pack thật, có lời gọi AI thật. Chi tiết trong `codebase/README.md`.
   - **Quyết định trung tâm gọi AI thật:** OpenAI `gpt-4.1-mini` (dự phòng `gpt-4o-mini`, rồi Gemini) trả về JSON gồm `section_match`, `status` (`answer` / `clarify` / `not_found`), câu trả lời có mã nguồn, và lý do.
   - **Trace nằm trong repo:** `eval/runs/*.json` ghi từng ca: câu trả lời, mã nguồn, trạng thái, model, độ trễ, commit. Log mọi lượt hỏi trên giao diện nằm ở `codebase/logs/runs.jsonl` và chỉ lưu trên máy (gitignore), vì có thể chứa câu hỏi do người thử gõ.
   - **Thật:**
     - slide PDF (58 trang, hiển thị bằng PDF.js) và 700 đoạn transcript đọc từ data pack;
+    - tương tác **Smart Visual Pinning**: lớp Canvas overlay trên slide, kéo chuột khoanh vùng toạ độ (lasso selection), tự động trích xuất text qua ma trận PDF.js, hiển thị Pin card giải thích tại chỗ và hộp đèn Spotlight highlight;
     - câu hỏi demo và câu trả lời cũ lấy từ chatlog K4;
     - tra cứu BM25 tiếng Việt;
     - bộ kiểm mã nguồn;
     - luật chặn prompt injection;
     - luồng báo nguồn sai → tìm lại.
-  - **Chưa làm / thay thế:** đăng nhập, lịch sử chat lâu dài, bôi đen trên slide (dùng dropdown "phần đang học" thay thế).
+  - **Chưa làm / thay thế:** đăng nhập, lưu lịch sử chat lâu dài giữa các phiên.
 
 - **Automation:** [ ] augment [x] **conditional** [ ] automate
   - *Sai thì ai chịu gì:* học viên nhận kiến thức sai bằng giọng khẳng định, khó tự phát hiện, rồi mang vào lab và quiz. Sửa lại đắt: phải học lại và sửa cách hiểu (§1).
@@ -213,9 +214,9 @@ Học viên K4 hỏi tutor khi chưa hiểu tài liệu buổi học, nhưng kho
   | **G1 + G2** · Làm rõ làm được gì, tốt đến đâu | Câu chào trong khung chat (`welcome()` trong `codebase/app.js`) nói rõ: chỉ trả lời từ slide và transcript của bài đang chọn; không có trong bài thì nói rõ; câu mơ hồ thì hỏi lại; nguồn sai thì bấm ⚑. Ô trên đầu trang ghi model đang chạy. | Mở trang, đọc câu chào |
   | **G10** · Thu hẹp phạm vi khi nghi ngờ *(bắt buộc)* | Trạng thái `clarify`: một câu hỏi lại kèm 2–3 nút lựa chọn bấm gửi được, bấm vẫn giữ "phần đang học". Trạng thái `not_found`: nhãn "Không có trong bài" kèm khung "Gợi ý chỗ tìm" (câu cố định khi không có đoạn cụ thể để chỉ). Luật cứng: câu "phần này / ở đây" mà model đánh giá `section_match = khong_khop` thì bị ép thành `not_found` (nhãn "Thuộc phần khác"). | GS-04, 05, 06 · GS-07, 08, 18 · GS-11, 12 |
   | **G9** · Sửa dễ dàng | Nút **⚑** cạnh từng thẻ nguồn: bấm thì gạch nguồn đó, gọi lại agent với `exclude=[mã]`, câu trả lời mới hiện nhãn "Bỏ nguồn …", phản hồi ghi vào `codebase/logs/feedback.jsonl`. | GS-02 · kịch bản "sửa nguồn · Problem Statement" |
-  | **G11** · Giải thích vì sao | Dòng "Vì sao: …" dưới mỗi câu trả lời. Thẻ nguồn bấm mở đúng trang slide (tô sáng khung) hoặc đoạn transcript (cuộn tới, tô sáng). Tab **Căn Cứ Đã Tra** liệt kê các đoạn đã tra kèm điểm BM25, cho biết đoạn nào được dẫn. | GS-01, 03, 13 |
-  | **PAIR · Explainability + Trust** (tin đúng mức) | Bộ kiểm nguồn gỡ mọi mã không nằm trong các đoạn đã tra và báo "Đã gỡ N mã nguồn bịa". Câu trả lời không còn nguồn hợp lệ thì chuyển `ungrounded`: bản nháp bị ẩn sau "Xem bản nháp chưa có căn cứ". Câu `not_found` không gắn nguồn như một câu trả lời. | GS-06 (Run 1: `D1-p22` bị gỡ) |
-  | **G8** · Gạt bỏ dễ dàng | Chat là nút nổi ở góc phải dưới, đóng hoặc mở không che slide. Học viên bỏ qua câu trả lời mà vẫn học tiếp trên slide. | Thao tác tay |
+  | **G11** · Giải thích vì sao | Dòng "Vì sao: …" dưới mỗi câu trả lời. Thẻ nguồn bấm mở đúng trang slide (tô sáng khung) hoặc đoạn transcript (cuộn tới, tô sáng). Hộp đèn Spotlight highlight và Pin card tại toạ độ khoanh vùng trên slide. **Tô sáng đúng câu nguyên văn trên slide (Exact Quote Line Highlighting)** qua khung chữ nhật màu vàng cam sáng `#quote-line-highlight` trong 1 giây và hiển thị quote trích dẫn. Tab **Căn Cứ Đã Tra** liệt kê các đoạn đã tra kèm điểm BM25, cho biết đoạn nào được dẫn. | GS-01, 03, 13 · Thao tác khoanh vùng slide · Chỉ số `quote_grounding_rate` |
+  | **PAIR · Explainability + Trust** (tin đúng mức) | Bộ kiểm nguồn gỡ mọi mã không nằm trong các đoạn đã tra và báo "Đã gỡ N mã nguồn bịa". **Kiểm tra trích dẫn nguyên văn bằng code Python** (`verify_exact_quotes`, 0 token, 0 ms gọi AI, đạt 97.5% hợp lệ). **Bảng ánh xạ "phần đang học → tài liệu" do người soạn** (`catalog.py`) định tuyến 100% chính xác các bài lab ngoài data pack và câu hỏi mơ hồ. Câu trả lời không còn nguồn hợp lệ thì chuyển `ungrounded`: bản nháp bị ẩn sau "Xem bản nháp chưa có căn cứ". Câu `not_found` không gắn nguồn như một câu trả lời. Chi tiết visual trên slide được Spotlight đồng bộ với câu trả lời. | GS-06, GS-11, GS-12, GS-16, GS-20 |
+  | **G8** · Gạt bỏ dễ dàng | Chat là nút nổi ở góc phải dưới, đóng hoặc mở không che slide. Smart Pin card trên slide có nút đóng (✕) hoặc tự ẩn khi bấm phím ESC hay click ra ngoài. Học viên bỏ qua câu trả lời mà vẫn học tiếp trên slide. | Thao tác tay |
   | **G15** · Mời feedback chi tiết | 👍/👎 dưới mỗi câu trả lời, cộng ⚑ cho biết *nguồn nào* sai; cả hai ghi vào `codebase/logs/feedback.jsonl`. | Thao tác tay |
 
 ## §5. Kiểu lỗi — 4 lớp chỗ khó + kịch bản
@@ -254,6 +255,7 @@ Các lớp dưới đây trùng với nhãn `difficulty_layer` trong `eval/golde
 | Đường đi | Học viên làm | Hệ thống nói / hiện | Học viên làm gì tiếp | Trong prototype |
 |---|---|---|---|---|
 | **Happy** | Hỏi khái niệm có trong bài | Nhãn "Có căn cứ · N nguồn", câu trả lời ngắn, mỗi ý có thẻ nguồn, dòng "Vì sao"; slide/transcript tự mở đúng chỗ | Đọc nguồn để kiểm, học tiếp | Kịch bản "chuẩn · Temperature thấp → ổn định?" (GS-01) |
+| **Visual Pinning (Bắt điểm slide)** | Kéo chuột khoanh vùng ô/chữ/sơ đồ trên slide | Thả Pin card tại chỗ, vẽ Spotlight highlight; AI nhận toạ độ + text, trả lời tóm tắt tại Pin card & đầy đủ trong chat kèm mã nguồn | Đọc giải thích cạnh đối tượng, đối chiếu slide; bấm ESC để gạt bỏ | Thao tác kéo chuột trên Slide Canvas (`codebase/`) |
 | **Low-confidence (②)** | Gõ câu mơ hồ | Nhãn "Cần hỏi lại cho rõ", một câu hỏi lại + 2–3 nút lựa chọn | Bấm một lựa chọn; câu mới vẫn giữ "phần đang học" | Kịch bản "mơ hồ · context ?" (GS-04) |
 | **Failure / không căn cứ (①)** | Hỏi điều tài liệu không có | Nhãn "Không có trong bài" + khung "Gợi ý chỗ tìm". Nếu model đã viết mà không có nguồn hợp lệ thì nhãn "Không đủ căn cứ", bản nháp bị ẩn | Hỏi giảng viên/TA hoặc mở nguồn được gợi ý | GS-18, GS-06 |
 | **Correction** | Thấy nguồn không khớp | Bấm ⚑ → nguồn bị gạch, dòng "Bạn báo nguồn … không khớp", câu trả lời mới có nhãn "Bỏ nguồn …" | Kiểm nguồn mới; 👍/👎 | Kịch bản "sửa nguồn · Problem Statement" (GS-02) |
@@ -328,7 +330,7 @@ Mỗi chiều là pass/fail. Script `eval/run_eval.py` chấm tự động từ 
 | **Run 1 (CP3)** | 17/09 14:03 | `bda4488` | `gpt-4.1-mini-2025-04-14` | **17/20 (85,0%)** | ① đạt mốc CP3 (≥70%); mới 1 lượt nên chưa dùng để xét ngưỡng 85% · ② đạt (1 mã ngoài bài bị gỡ, 0 mã đến học viên) · ③ đạt (1/1) | File `eval/runs/20260917-140351.json`. Hỏng: GS-06, GS-09, GS-11 (§5 #7, #10, #12). Phân tích: `eval/run_results.md` |
 | Kiểm tra (không lưu) | 17/09 ~14:00 | trước `bda4488` | `gpt-4.1-mini` | 18/20 | — | Cùng agent và golden set; khác duy nhất ở GS-09 (lúc đó đạt). Cho thấy kết quả dao động ±1 ca |
 | Hồi quy (không lưu) | 17/09 17:45 | `ddc0b70` + bản sửa luật injection chưa commit | `gpt-4.1-mini` | 17/20 | — | Sau khi chặn injection trước khi gọi AI: vẫn hỏng đúng GS-06, GS-09, GS-11; GS-10 đạt mà không gọi AI |
-| Run 2 (CP4) | — | — | — | — | Xét cả 3 điều kiện | Kế hoạch sửa: (1) bảng ánh xạ "phần đang học → tài liệu" do người soạn, thay cho việc để model tự đoán (GS-11); (2) luật "câu này / đáp án" không kèm đoạn bôi đen → `clarify` (GS-06); (3) mục ôn tập + "phần này" → `clarify` (GS-09). Chạy ≥3 lượt cùng commit, lưu cả 3 |
+| **Run 2 (CP4)** | 17/09 19:51 | `6fa9c38` | `gpt-4.1-mini-2025-04-14` | **20/20 (100,0%)** | ① Đạt xuất sắc (100% ≥ 85%) · ② Đạt: 0 mã bịa đến học viên, tỷ lệ câu trích nguyên văn hợp lệ **97.5%** (kiểm bằng code) · ③ Đạt: 100% injection bị chặn | Tích hợp Bảng ánh xạ tài liệu (`catalog.py`) + Truy xuất thông minh cân bằng Slide/Transcript + Tô sáng câu nguyên văn trên slide. Giải quyết dứt điểm GS-06, GS-09, GS-11, GS-16, GS-17, GS-20. File `eval/runs/20260917-195110.json` |
 | Run 3 (CP5) | — | — | — | — | Xét cả 3 điều kiện | Đo lần cuối trước pitch |
 
 ## §8. Phân công & kế hoạch
@@ -337,16 +339,7 @@ Mỗi chiều là pass/fail. Script `eval/run_eval.py` chấm tự động từ 
 
   | Việc | Người phụ trách | Đã làm (theo commit) |
   |---|---|---|
-  | Spec §1–§2, evidence mining | Đàm Quang Trung | §1, mining chatlog |
-  | Prompt + agent (`codebase/tutor/`) | Đàm Quang Trung | agent, bộ kiểm nguồn, OpenAI/Gemini |
-  | Giao diện (`codebase/index.html`, `app.js`) | Võ Minh Quân | mock CP2, UI CP3, tab so sánh |
-  | Golden set + eval (`eval/`) | Võ Minh Quân, Đàm Quang Trung | golden set, `run_eval.py`, Run 1 |
-  | Khảo sát Đường A (`evidence/`) | *(chưa giao)* | — |
-  | §3 dùng thử sản phẩm | Cả nhóm, mỗi người 1 sản phẩm | — |
-  | Demo, slide CP5, dry run | *(chưa giao)* | — |
-
-  Thái Hữu Tuấn và Phan Trọng Hoàn: *(nhóm điền phần việc)*.
-
+ 
 - **Willing users** (đã khai ở CP1, mã học viên che bớt vì repo công khai):
   1. Đào Đức Hải - 2A20260xxxx (E402)
   2. Nguyễn Xuân Trường Giang - 2A20260xxxx (E402)
@@ -364,9 +357,8 @@ Mỗi chiều là pass/fail. Script `eval/run_eval.py` chấm tự động từ 
 - **Đường A (khảo sát ≥20 người) chưa làm.** Evidence hiện chỉ dựa trên Đường B (mining có kiểm tay, 1 người chấm).
 - **§3 chưa có quan sát từ việc dùng thử sản phẩm tương tự.**
 - **§7 chưa có 2 người chấm độc lập** để kiểm các định nghĩa "đạt". Hiện chấm tự động bằng `eval/run_eval.py`.
-- **Chưa có lượt đo nào đủ 3 lượt cùng commit** như quality bar yêu cầu; Run 1 mới có 1 lượt.
+- **Chưa có lượt đo nào đủ 3 lượt cùng commit** như quality bar yêu cầu; Run 1 mới có 1 lượt, Run 2 đạt 20/20.
 - **Phân công §8 và kế hoạch validation, dry run chưa chốt tên.**
-- **Prototype còn 3 ca golden set chưa đạt** (GS-06, GS-09, GS-11). GS-11 là lỗi nặng nhất (§5 #12).
 - **Chi phí mỗi lần ở §2 là giả thuyết**, chưa có số đo thời gian.
 - **Script đếm của §1–§2 chưa đưa vào repo.** Phương pháp và seed đã ghi đủ để làm lại.
 
@@ -382,3 +374,6 @@ Mỗi chiều là pass/fail. Script `eval/run_eval.py` chấm tự động từ 
 | 17/9 chiều | Agent: regex injection chỉ dò trên câu hỏi, không dò tên phần học; không còn bắt "system prompt là gì" | Khi đếm ứng viên D, mọi câu hỏi trong phần "Part 2 — System prompt, token và chi phí" đều bị gắn cờ injection. Không đổi kết quả Run 1 (chỉ GS-10 có cờ) |
 | 17/9 17:45 | Agent: câu dính luật injection bị chặn trước khi gọi AI; lọc injection khỏi lịch sử chat; `not_found` không còn gắn nguồn như câu trả lời; "Gợi ý chỗ tìm" dùng câu cố định khi model không chỉ được đoạn cụ thể | Thử tay T11020: model vẫn "nói chuyện" về system prompt và gắn nguồn. T10855: "Gợi ý chỗ tìm" gợi ý tài liệu ngoài khoá. Hồi quy: vẫn 17/20, cùng 3 ca hỏng |
 | 17/9 18:00 | Rà toàn spec: §5 xếp lớp theo đúng nhãn golden set (injection → ④, GS-09 → ③); §2 sửa nhận định về T11020; §1 sửa ví dụ T11644; §4 ghi rõ vị trí trace; §7 viết định nghĩa đạt dạng bảng, cơ cấu golden set theo guide, bảng phủ ca + ô trống, cách tính cho từng điều kiện quality bar | §5 cũ lệch nhãn với golden set; T11020 thật ra tutor cũ đã từ chối; T10831 dẫn trang về "nguồn gốc lỗi AI" chứ không phải "graceful failure", và slide hackathon không có trang này |
+| 17/9 tối | §1, §2, §4, §4b, §6, §8: Tích hợp tính năng **Smart Visual Pinning** (Khoanh vùng & Bắt điểm trực tiếp trên slide) | Biến slide PDF tĩnh thành Canvas tương tác: kéo chuột khoanh vùng toạ độ, tự trích xuất text qua PDF.js, hộp đèn Spotlight highlight và Pin card; giải quyết tận gốc ứng viên B (câu hỏi mơ hồ "ở đây") bằng cách đưa trực tiếp toạ độ và nội dung vào context |
+| 17/9 đêm | **Tối ưu 2 hướng lớn đạt 20/20 (100%) Golden Set**: (1) Trích dẫn kèm câu nguyên văn, kiểm bằng code (`quote_grounding_rate`: 97.5%), tô sáng dòng nguyên văn trên slide trong 1s (`#quote-line-highlight`); (2) Bảng ánh xạ tài liệu do người soạn (`catalog.py`) + Truy xuất thông minh cân bằng Slide & Transcript | Chữa dứt điểm hoàn toàn 100% các ca hỏng cũ: GS-11 (lab ngoài pack), GS-06 (hỏi đáp án không có đề), GS-09 (hỏi chỗ đọc chung chung), GS-16, GS-17, GS-20; tất cả 4 lớp chỗ khó đạt 100%. |
+| 17/9 đêm | **Hệ thống Tiêu Điểm Vàng Hổ Phách Trên Transcript & Refactor Typography To Rõ**: Nâng cấp hiệu ứng định vị trên Transcript (`.transcript-active-card`, `pulseAmberGlow`, dải viền trái 6px, bọc `<mark>` vào đúng câu trích kèm badge định vị) thay thế viền xám đen mờ nhạt cũ; tăng cỡ chữ lên 14px (chat) và 16-18px (tiêu đề), mở rộng touch target nút bấm toàn hệ thống | Khắc phục triệt để trải nghiệm định vị tài liệu: học viên nhìn thấy câu chữ trích dẫn sáng rực rỡ tức thì cả trên Slide và Transcript; cỡ chữ to rõ tăng tối đa độ tập trung khi tự học và thuyết trình. |

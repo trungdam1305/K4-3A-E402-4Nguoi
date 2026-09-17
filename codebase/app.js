@@ -20,6 +20,15 @@ const state = {
   goldenCases: [],
   goldenResults: {},
   currentGoldenCase: null,
+  verifiedQuotes: {},
+};
+
+// ------------------------------------------------------------------ visual pinning state
+const pinState = {
+  enabled: false,
+  isDragging: false,
+  startX: 0,
+  startY: 0,
 };
 
 // ------------------------------------------------------------------ floating chat widget state
@@ -96,7 +105,11 @@ function citeLabel(id) {
 
 function citeChip(id, extraClass = '') {
   const s = state.sources[id];
-  const title = s ? `${s.label} — ${s.title}` : id;
+  const qText = state.verifiedQuotes?.[id];
+  let title = s ? `${s.label} — ${s.title}` : id;
+  if (qText) {
+    title += `\nTrích dẫn: “${qText}”`;
+  }
   return `<button type="button" class="cite ${extraClass}" data-cite="${id}" title="${escapeHtml(title)}">${escapeHtml(citeLabel(id))}</button>`;
 }
 
@@ -218,11 +231,21 @@ async function renderPage() {
 
   state.pdf.task = pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport });
   try { await state.pdf.task.promise; } catch (e) { if (e?.name !== 'RenderingCancelledException') throw e; }
+  try {
+    await state.pdf.task.promise;
+    const textContent = await pdfPage.getTextContent();
+    state.pdf.currentTextItems = textContent?.items || [];
+    state.pdf.baseViewport = base;
+  } catch (e) {
+    if (e?.name !== 'RenderingCancelledException') console.warn(e);
+  }
+  clearActivePin();
 }
 
 function prevSlide() {
   if (state.pdf.page > 1) {
     state.pdf.page -= 1;
+    clearActivePin();
     renderPage();
     $('#slide-quote')?.classList.add('hidden');
   }
@@ -231,13 +254,15 @@ function prevSlide() {
 function nextSlide() {
   if (state.pdf.doc && state.pdf.page < state.pdf.doc.numPages) {
     state.pdf.page += 1;
+    clearActivePin();
     renderPage();
     $('#slide-quote')?.classList.add('hidden');
   }
 }
 
-async function showSlide(deck, page, quote) {
+async function showSlide(deck, page, quote, quoteText = '') {
   switchTab('slide');
+  clearActivePin();
   try {
     if (state.pdf.deck !== deck) await loadDeck(deck);
     state.pdf.page = page;
@@ -246,14 +271,319 @@ async function showSlide(deck, page, quote) {
     toast(`Không mở được slide: ${e.message}`);
     return;
   }
+  const qText = quoteText || quote?.quoteText || (quote?.id && state.verifiedQuotes?.[quote.id]) || '';
   const box = $('#slide-quote');
   if (quote) {
-    box.querySelector('span').innerHTML = `Trợ giảng dẫn <strong>${escapeHtml(quote.label)}</strong> — ${escapeHtml(quote.title)}`;
+    const quoteSuffix = qText ? ` — <span class="bg-amber-100/80 text-amber-950 px-1 py-0.5 rounded font-semibold italic">“${escapeHtml(qText)}”</span>` : '';
+    box.querySelector('span').innerHTML = `Trợ giảng dẫn <strong>${escapeHtml(quote.label || quote.id || '')}</strong> — ${escapeHtml(quote.title || '')}${quoteSuffix}`;
     box.classList.remove('hidden');
     flash($('#slide-frame'));
+    if (qText) {
+      highlightQuoteOnSlide(qText);
+    }
   } else {
     box.classList.add('hidden');
   }
+}
+
+function highlightQuoteOnSlide(quoteText) {
+  const box = $('#quote-line-highlight');
+  if (!box || !quoteText || !state.pdf.currentTextItems || !state.pdf.baseViewport) {
+    box?.classList.add('hidden');
+    return;
+  }
+  const items = state.pdf.currentTextItems;
+  const base = state.pdf.baseViewport;
+
+  const norm = (s) => (s || '').toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  const qNorm = norm(quoteText);
+  const qWords = qNorm.split(' ').filter((w) => w.length >= 2);
+  if (!qWords.length) {
+    box.classList.add('hidden');
+    return;
+  }
+
+  // 1. Tìm các text items có chứa từ trong câu trích
+  const candidates = [];
+  for (let idx = 0; idx < items.length; idx++) {
+    const it = items[idx];
+    if (!it.str || !it.str.trim()) continue;
+    const itNorm = norm(it.str);
+    const hitWords = qWords.filter((w) => itNorm.includes(w));
+    if (hitWords.length > 0) {
+      const tx = it.transform[4];
+      const ty = it.transform[5];
+      const w = Math.max(10, it.width || 40);
+      const h = Math.max(10, it.height || 14);
+      const nx = tx / base.width;
+      const ny = (base.height - ty) / base.height;
+      const nw = w / base.width;
+      const nh = h / base.height;
+      candidates.push({ idx, it, nx, ny, nw, nh, hitWords, hitScore: hitWords.length });
+    }
+  }
+
+  if (!candidates.length) {
+    box.classList.add('hidden');
+    return;
+  }
+
+  // 2. Gom cụm các item nằm gần nhau theo chiều dọc (cùng đoạn / dòng)
+  const clusters = [];
+  for (const item of candidates) {
+    let placed = false;
+    for (const cl of clusters) {
+      const avgY = cl.items.reduce((s, x) => s + x.ny, 0) / cl.items.length;
+      if (Math.abs(item.ny - avgY) < 0.10) {
+        cl.items.push(item);
+        item.hitWords.forEach((w) => cl.uniqueWords.add(w));
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      clusters.push({ items: [item], uniqueWords: new Set(item.hitWords) });
+    }
+  }
+
+  // 3. Chọn cụm có độ phủ số từ trích dẫn cao nhất
+  clusters.sort((a, b) => b.uniqueWords.size - a.uniqueWords.size || b.items.length - a.items.length);
+  const bestCluster = clusters[0];
+  if (!bestCluster || !bestCluster.items.length) {
+    box.classList.add('hidden');
+    return;
+  }
+
+  let minX = 1, minY = 1, maxX = 0, maxY = 0;
+  for (const m of bestCluster.items) {
+    minX = Math.min(minX, m.nx);
+    minY = Math.min(minY, m.ny - m.nh);
+    maxX = Math.max(maxX, m.nx + m.nw);
+    maxY = Math.max(maxY, m.ny);
+  }
+
+  // Thêm padding cho khung highlight viền vàng
+  minX = Math.max(0.005, minX - 0.015);
+  minY = Math.max(0.005, minY - 0.008);
+  maxX = Math.min(0.995, maxX + 0.015);
+  maxY = Math.min(0.995, maxY + 0.012);
+
+  box.style.left = `${(minX * 100).toFixed(2)}%`;
+  box.style.top = `${(minY * 100).toFixed(2)}%`;
+  box.style.width = `${((maxX - minX) * 100).toFixed(2)}%`;
+  box.style.height = `${((maxY - minY) * 100).toFixed(2)}%`;
+  box.classList.remove('hidden');
+
+  box.classList.remove('animate-pulse');
+  void box.offsetWidth;
+  box.classList.add('animate-pulse');
+}
+
+// ------------------------------------------------------------------ smart visual pinning
+function clearActivePin() {
+  $('#pin-spotlight-box')?.classList.add('hidden');
+  $('#smart-pin-card')?.classList.add('hidden');
+  $('#pin-drag-box')?.classList.add('hidden');
+  $('#quote-line-highlight')?.classList.add('hidden');
+}
+
+function togglePinMode(force) {
+  pinState.enabled = typeof force === 'boolean' ? force : !pinState.enabled;
+  const btn = $('#btn-toggle-pin');
+  const hint = $('#pin-hint-bar');
+  const overlay = $('#slide-overlay');
+
+  if (btn) {
+    btn.classList.toggle('bg-blue-50', pinState.enabled);
+    btn.classList.toggle('border-blue-300', pinState.enabled);
+    btn.classList.toggle('text-blue-700', pinState.enabled);
+    btn.classList.toggle('font-semibold', pinState.enabled);
+  }
+  if (hint) hint.classList.toggle('hidden', !pinState.enabled);
+  if (overlay) {
+    overlay.classList.toggle('pointer-events-none', !pinState.enabled);
+    overlay.classList.toggle('pointer-events-auto', pinState.enabled);
+    overlay.classList.toggle('cursor-crosshair', pinState.enabled);
+  }
+  if (!pinState.enabled) {
+    clearActivePin();
+  }
+}
+
+function extractTextInBox(normBox, items, base) {
+  if (!items || !items.length || !base) return '';
+  const hits = [];
+  for (const item of items) {
+    if (!item.str || !item.str.trim()) continue;
+    const tx = item.transform[4];
+    const ty = item.transform[5];
+    const nx = tx / base.width;
+    const ny = (base.height - ty) / base.height;
+    if (nx >= normBox.x1 - 0.03 && nx <= normBox.x2 + 0.03 &&
+        ny >= normBox.y1 - 0.04 && ny <= normBox.y2 + 0.04) {
+      hits.push({ str: item.str, y: ny, x: nx });
+    }
+  }
+  hits.sort((a, b) => Math.abs(a.y - b.y) > 0.02 ? a.y - b.y : a.x - b.x);
+  return hits.map((h) => h.str).join(' ').replace(/\s+/g, ' ').trim();
+}
+
+function positionPinCard(x, y, w, h, frameRect) {
+  const card = $('#smart-pin-card');
+  if (!card) return;
+
+  card.classList.remove('hidden');
+  const cardWidth = Math.min(320, frameRect.width - 24);
+  card.style.width = `${cardWidth}px`;
+
+  let left = x + w + 12;
+  let top = y;
+
+  if (left + cardWidth > frameRect.width - 12) {
+    left = x - cardWidth - 12;
+    if (left < 10) {
+      left = Math.max(10, Math.min(frameRect.width - cardWidth - 10, x));
+      top = y + h + 12;
+      if (top + 180 > frameRect.height - 10) {
+        top = Math.max(10, y - 180);
+      }
+    }
+  }
+
+  card.style.left = `${Math.max(10, Math.floor(left))}px`;
+  card.style.top = `${Math.max(10, Math.floor(top))}px`;
+  $('#pin-card-title').textContent = 'Đang phân tích...';
+  $('#pin-card-body').innerHTML = '<div class="flex items-center gap-2 text-zinc-500 py-2"><i class="ph ph-spinner animate-spin text-blue-600"></i> Đang trích xuất và giải thích...</div>';
+  $('#pin-card-cite').textContent = '';
+}
+
+async function handlePinAsk(extracted) {
+  const deck = state.pdf.deck || 'D1';
+  const page = state.pdf.page || 1;
+  const truncated = extracted.length > 80 ? extracted.slice(0, 80) + '…' : extracted;
+  $('#pin-card-title').textContent = truncated;
+  $('#pin-card-title').title = extracted;
+
+  const rawQuestion = `(Trang ${page}, đoạn được chọn: "${extracted}") Giải thích trọng tâm phần này`;
+
+  try {
+    const res = await api('/api/ask', {
+      question: rawQuestion,
+      lecture: state.lecture,
+      section: state.lectures[state.lecture]?.title || '',
+    });
+
+    if (res) {
+      $('#pin-card-body').innerHTML = renderMd(res.answer || 'Chưa có câu trả lời.');
+      const cite = res.citations?.[0] ? citeLabel(res.citations[0]) : (res.status === 'not_found' ? 'Ngoài bài học' : `Slide ${deck} · tr.${page}`);
+      $('#pin-card-cite').textContent = cite;
+
+      const askMoreBtn = $('#pin-card-ask-more');
+      if (askMoreBtn) {
+        askMoreBtn.onclick = () => {
+          openChat();
+          $('#user-input').value = `Nói rõ hơn về phần "${truncated}": `;
+          $('#user-input')?.focus();
+        };
+      }
+
+      updateComparison(res, null);
+    }
+  } catch (e) {
+    $('#pin-card-body').innerHTML = `<span class="text-rose-600">Lỗi: ${escapeHtml(e.message)}</span>`;
+  }
+}
+
+function setupPinEvents() {
+  const overlay = $('#slide-overlay');
+  const dragBox = $('#pin-drag-box');
+  const spotBox = $('#pin-spotlight-box');
+  if (!overlay) return;
+
+  overlay.addEventListener('mousedown', (ev) => {
+    if (!pinState.enabled || ev.button !== 0) return;
+    if (ev.target.closest('#smart-pin-card')) return;
+
+    ev.preventDefault();
+    const rect = overlay.getBoundingClientRect();
+    pinState.isDragging = true;
+    pinState.startX = ev.clientX - rect.left;
+    pinState.startY = ev.clientY - rect.top;
+
+    if (dragBox) {
+      dragBox.style.left = `${pinState.startX}px`;
+      dragBox.style.top = `${pinState.startY}px`;
+      dragBox.style.width = '0px';
+      dragBox.style.height = '0px';
+      dragBox.classList.remove('hidden');
+    }
+  });
+
+  window.addEventListener('mousemove', (ev) => {
+    if (!pinState.isDragging || !overlay) return;
+    const rect = overlay.getBoundingClientRect();
+    const curX = Math.max(0, Math.min(rect.width, ev.clientX - rect.left));
+    const curY = Math.max(0, Math.min(rect.height, ev.clientY - rect.top));
+
+    const x = Math.min(pinState.startX, curX);
+    const y = Math.min(pinState.startY, curY);
+    const w = Math.abs(curX - pinState.startX);
+    const h = Math.abs(curY - pinState.startY);
+
+    if (dragBox) {
+      dragBox.style.left = `${x}px`;
+      dragBox.style.top = `${y}px`;
+      dragBox.style.width = `${w}px`;
+      dragBox.style.height = `${h}px`;
+    }
+  });
+
+  window.addEventListener('mouseup', async (ev) => {
+    if (!pinState.isDragging || !overlay) return;
+    pinState.isDragging = false;
+    dragBox?.classList.add('hidden');
+
+    const rect = overlay.getBoundingClientRect();
+    const curX = Math.max(0, Math.min(rect.width, ev.clientX - rect.left));
+    const curY = Math.max(0, Math.min(rect.height, ev.clientY - rect.top));
+
+    const x = Math.min(pinState.startX, curX);
+    const y = Math.min(pinState.startY, curY);
+    const w = Math.abs(curX - pinState.startX);
+    const h = Math.abs(curY - pinState.startY);
+
+    if (w < 15 && h < 15) return;
+
+    const pctX = (x / rect.width) * 100;
+    const pctY = (y / rect.height) * 100;
+    const pctW = (w / rect.width) * 100;
+    const pctH = (h / rect.height) * 100;
+
+    const normBox = {
+      x1: x / rect.width,
+      y1: y / rect.height,
+      x2: (x + w) / rect.width,
+      y2: (y + h) / rect.height,
+    };
+
+    let extracted = extractTextInBox(normBox, state.pdf.currentTextItems, state.pdf.baseViewport);
+    if (!extracted) extracted = `Vùng sơ đồ/nội dung tại trang ${state.pdf.page}`;
+
+    if (spotBox) {
+      spotBox.style.left = `${pctX}%`;
+      spotBox.style.top = `${pctY}%`;
+      spotBox.style.width = `${pctW}%`;
+      spotBox.style.height = `${pctH}%`;
+      spotBox.classList.remove('hidden');
+    }
+
+    positionPinCard(x, y, w, h, rect);
+    await handlePinAsk(extracted);
+  });
+
+  $('#pin-card-close')?.addEventListener('click', clearActivePin);
+  $('#btn-toggle-pin')?.addEventListener('click', () => togglePinMode());
+  $('#pin-hint-close')?.addEventListener('click', () => togglePinMode(false));
 }
 
 async function loadTranscript(file) {
@@ -265,17 +595,87 @@ async function loadTranscript(file) {
   renderTranscript();
 }
 
-async function showTranscript(file, highlightId) {
+async function showTranscript(file, highlightId, quoteText = '') {
   $('#transcript-file').value = file;
   switchTab('transcript');
   await loadTranscript(file);
+  const qText = quoteText || (highlightId && state.verifiedQuotes?.[highlightId]) || '';
   if (highlightId) {
     const el = document.getElementById(`para-${highlightId}`);
     if (el) {
       el.classList.remove('hidden');
+      document.querySelectorAll('.transcript-active-card').forEach((c) => c.classList.remove('transcript-active-card'));
+      el.classList.add('transcript-active-card');
       el.scrollIntoView({ block: 'center', behavior: 'smooth' });
       flash(el);
+      highlightQuoteInTranscript(el, qText);
     }
+  }
+}
+
+function highlightQuoteInTranscript(el, quoteText) {
+  if (!el) return;
+  const textDiv = el.querySelector('.whitespace-pre-line') || el.querySelector('.text-zinc-700');
+  if (!textDiv) return;
+
+  if (!el.dataset.origText) {
+    el.dataset.origText = textDiv.textContent;
+  }
+  const raw = el.dataset.origText;
+
+  // Xoá badge cũ nếu có
+  el.querySelector('.transcript-quote-badge')?.remove();
+
+  if (!quoteText || !quoteText.trim()) {
+    textDiv.textContent = raw;
+    const badge = document.createElement('div');
+    badge.className = 'transcript-quote-badge mb-2.5 text-xs font-bold text-amber-950 bg-gradient-to-r from-amber-100 to-amber-50/80 border-2 border-amber-400 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-xs';
+    badge.innerHTML = '<i class="ph-fill ph-map-pin text-amber-600 text-base shrink-0 animate-bounce"></i><span class="flex-1">Vị trí đoạn văn bản AI đang chỉ dẫn</span><span class="text-[10.5px] font-mono font-medium text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded">Điểm tham chiếu</span>';
+    textDiv.parentNode.insertBefore(badge, textDiv);
+    return;
+  }
+
+  // Thêm badge nổi bật trên đoạn văn khi có câu trích dẫn xác thực
+  const badge = document.createElement('div');
+  badge.className = 'transcript-quote-badge mb-2.5 text-xs font-bold text-amber-950 bg-gradient-to-r from-amber-100 to-amber-50/80 border-2 border-amber-400 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-xs';
+  badge.innerHTML = '<i class="ph-fill ph-seal-check text-amber-600 text-base shrink-0 animate-bounce"></i><span class="flex-1">Đoạn thông tin AI trích dẫn làm căn cứ</span><span class="text-[10.5px] font-mono font-medium text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded">Trùng khớp cao</span>';
+  textDiv.parentNode.insertBefore(badge, textDiv);
+
+  // Tìm câu hoặc đoạn khớp nhất trong raw
+  const norm = (s) => (s || '').toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  const qNorm = norm(quoteText);
+  const qWords = qNorm.split(' ').filter((w) => w.length >= 2);
+
+  const sentences = raw.split(/(?<=[.!?\n])\s+/);
+  let bestSent = '';
+  let bestScore = 0;
+
+  for (const sent of sentences) {
+    if (!sent.trim()) continue;
+    const sNorm = norm(sent);
+    let score = 0;
+    for (const w of qWords) {
+      if (sNorm.includes(w)) score += 1;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestSent = sent;
+    }
+  }
+
+  if (bestScore >= 1 && bestSent) {
+    const safeRaw = escapeHtml(raw);
+    const safeSent = escapeHtml(bestSent);
+    const idx = safeRaw.indexOf(safeSent);
+    if (idx !== -1) {
+      const before = safeRaw.slice(0, idx);
+      const after = safeRaw.slice(idx + safeSent.length);
+      textDiv.innerHTML = `${before}<mark class="bg-amber-300 text-amber-950 px-2 py-0.5 rounded font-bold ring-2 ring-amber-500 shadow-sm inline-block my-0.5">${safeSent}</mark>${after}`;
+    } else {
+      textDiv.textContent = raw;
+    }
+  } else {
+    textDiv.textContent = raw;
   }
 }
 
@@ -288,7 +688,7 @@ function renderTranscript() {
     if (!hidden) lastHeading = p.title;
     return `${heading}<div id="para-${p.id}" class="bg-white border border-zinc-200 hover:border-zinc-300 rounded-lg p-3 shadow-sm ${hidden ? 'hidden' : ''} group transition">
       <div class="flex items-center justify-between mb-1.5">
-        <span class="font-mono text-[11px] font-medium text-zinc-800 bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded">[${p.id}]</span>
+        <span class="transcript-id-badge font-mono text-[11px] font-medium text-zinc-800 bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded transition">[${p.id}]</span>
         <button type="button" data-ask="Giải thích đoạn transcript ${p.id}" class="opacity-0 group-hover:opacity-100 text-[10.5px] text-zinc-600 hover:text-zinc-900 px-2 py-0.5 rounded bg-zinc-100 hover:bg-zinc-200 transition">Hỏi AI đoạn này</button>
       </div>
       <div class="text-zinc-700 whitespace-pre-line leading-relaxed text-xs">${escapeHtml(p.text)}</div></div>`;
@@ -296,11 +696,12 @@ function renderTranscript() {
   $('#transcript-list').innerHTML = html || '<p class="text-zinc-400 text-xs">Không có đoạn nào khớp.</p>';
 }
 
-async function openSource(id) {
+async function openSource(id, quoteText = '') {
   const s = state.sources[id];
   if (!s) { toast(`Chưa có thông tin nguồn ${id}`); return; }
-  if (s.kind === 'slide') await showSlide(s.deck, s.page, s);
-  else await showTranscript(s.source, id);
+  const qText = quoteText || state.verifiedQuotes?.[id] || '';
+  if (s.kind === 'slide') await showSlide(s.deck, s.page, s, qText);
+  else await showTranscript(s.source, id, qText);
 }
 
 function renderEvidence(run) {
@@ -310,12 +711,15 @@ function renderEvidence(run) {
     const scope = r.scope === 'lecture'
       ? '<span class="px-2 py-0.5 rounded bg-zinc-100 text-zinc-800 border border-zinc-200 text-[10px] font-mono font-medium">bài đang học</span>'
       : '<span class="px-2 py-0.5 rounded bg-zinc-50 text-zinc-500 border border-zinc-200 text-[10px] font-mono">bài khác · chỉ để chỉ đường</span>';
-    const mark = cited.has(r.id) ? '<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium text-[10px]">được dẫn</span>' : '';
+    const vq = (run.verified_quotes || []).find((v) => v.id === r.id && v.verified);
+    const quoteHtml = vq ? `<div class="mt-2 text-xs bg-amber-50/90 border border-amber-300/80 text-amber-950 rounded-md p-2 italic flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span><span>✨ Câu trích AI làm căn cứ: “${escapeHtml(vq.quote)}”</span></div>` : '';
+    const mark = cited.has(r.id) ? '<span class="px-2 py-0.5 rounded bg-zinc-900 text-white text-[10px] font-mono font-semibold shadow-xs">được trích dẫn</span>' : '';
     return `<div class="bg-white border border-zinc-200 hover:border-zinc-300 rounded-lg p-3.5 mb-2.5 shadow-sm transition">
       <div class="flex items-center gap-2 flex-wrap">${citeChip(r.id)} ${scope} ${mark}
         <span class="ml-auto text-zinc-500 font-mono text-xs">BM25: ${r.score}</span></div>
       <div class="font-medium text-zinc-900 mt-1.5 text-xs">${escapeHtml(s.title || '')}</div>
-      <div class="text-zinc-600 mt-0.5 text-xs leading-relaxed">${escapeHtml((s.snippet || '').replace(/\s*\n\s*/g, ' · '))}</div></div>`;
+      <div class="text-zinc-600 mt-0.5 text-xs leading-relaxed">${escapeHtml((s.snippet || '').replace(/\s*\n\s*/g, ' · '))}</div>
+      ${quoteHtml}</div>`;
   }).join('');
   const excluded = run.excluded?.length ? `<p class="mb-3 text-zinc-700 bg-zinc-100 border border-zinc-200 rounded-lg p-2.5 text-xs">Đã loại theo phản hồi: ${run.excluded.map(escapeHtml).join(', ')}</p>` : '';
   $('#panel-evidence').innerHTML = `
@@ -464,7 +868,14 @@ function renderRun(bubble, run) {
   const badges = [`<span class="inline-flex items-center gap-1 border rounded-md px-2 py-0.5 text-[10.5px] font-medium ${cls}"><i class="ph-bold ${icon}"></i> ${escapeHtml(label(run))}</span>`];
   if (run.mode === 'retrieval-only' && run.status !== 'search_only') badges.push('<span class="border rounded-md px-2 py-0.5 bg-zinc-100 text-zinc-600 border-zinc-200">Chưa qua AI</span>');
   if (run.flags.includes('section_mismatch')) badges.push('<span class="border rounded-md px-2 py-0.5 bg-amber-50 text-amber-700 border-amber-200"><i class="ph ph-link-break"></i> Thuộc phần khác</span>');
+  if (run.flags.includes('catalog_policy')) badges.push('<span class="border rounded-md px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200"><i class="ph ph-shield-check"></i> Bảng ánh xạ tài liệu</span>');
   if (run.excluded.length) badges.push(`<span class="border rounded-md px-2 py-0.5 bg-zinc-100 text-zinc-600 border-zinc-200">Bỏ nguồn ${run.excluded.map(escapeHtml).join(', ')}</span>`);
+  if (run.verified_quotes?.length && run.citations?.length) {
+    const verifiedCount = run.verified_quotes.filter(v => v.verified).length;
+    if (verifiedCount > 0) {
+      badges.push(`<span class="border rounded-md px-2 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200"><i class="ph-bold ph-seal-check"></i> Câu trích kiểm bằng code: ${verifiedCount}/${run.citations.length}</span>`);
+    }
+  }
 
   let body = run.status === 'ungrounded'
     ? `<p class="text-amber-700 mb-1 font-medium">Trợ giảng viết được câu trả lời nhưng không gắn được vào đoạn tài liệu nào, nên đã ẩn để tránh đoán sai.</p>
@@ -488,9 +899,24 @@ function renderRun(bubble, run) {
   const sources = run.citations.map((id) => `<span class="inline-flex items-center">${citeChip(id)}<button type="button" data-report="${id}" data-run="${run.run_id}" title="Nguồn không khớp — tìm lại" class="text-zinc-400 hover:text-rose-600 px-0.5 text-xs">⚑</button></span>`).join(' ');
   const ms = run.latency_ms.total >= 1000 ? `${(run.latency_ms.total / 1000).toFixed(1)} s` : `${run.latency_ms.total} ms`;
 
+  const quotesHtml = (run.verified_quotes || []).filter((v) => v.verified && v.quote).map((vq) => `
+    <div class="mt-2.5 bg-amber-50/90 border border-amber-300/90 rounded-lg p-2.5 text-xs text-amber-950 shadow-xs">
+      <div class="font-bold flex items-center justify-between text-amber-900 mb-1">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span>Đoạn tài liệu gốc AI lấy làm căn cứ:</span>
+        <button type="button" data-cite="${escapeHtml(vq.id)}" class="inline-flex items-center gap-1 font-semibold text-[11px] text-amber-800 hover:text-amber-950 bg-amber-200/80 hover:bg-amber-300 px-2 py-0.5 rounded cursor-pointer transition">
+          <i class="ph-bold ph-arrow-square-out"></i> Xem & tô sáng trên ${escapeHtml(citeLabel(vq.id))}
+        </button>
+      </div>
+      <div class="italic text-amber-900 leading-relaxed pl-2.5 border-l-2 border-amber-400">
+        “${escapeHtml(vq.quote)}”
+      </div>
+    </div>
+  `).join('');
+
   bubble.innerHTML = `
     <div class="flex flex-wrap gap-1 mb-2 text-[10.5px]">${badges.join('')}</div>
     ${body}
+    ${quotesHtml}
     ${run.reason ? `<p class="mt-2.5 text-[11px] text-zinc-500 italic flex items-center gap-1.5"><i class="ph ph-lightbulb text-amber-600"></i> Vì sao: ${escapeHtml(run.reason)}</p>` : ''}
     <div class="mt-2.5 pt-2 border-t border-zinc-200 flex items-center justify-between gap-2">
       <div class="flex flex-wrap items-center gap-1 min-w-0">${sources ? `<span class="text-[10.5px] text-zinc-500">Nguồn:</span> ${sources}` : ''}</div>
@@ -524,6 +950,13 @@ async function ask(raw, { display, turn = null, exclude = [], section = null, th
   try {
     const run = await api('/api/ask', { question: raw, lecture: state.lecture, section: sec, history: state.history.slice(-4), exclude });
     Object.assign(state.sources, run.sources);
+    if (run.verified_quotes && Array.isArray(run.verified_quotes)) {
+      run.verified_quotes.forEach((vq) => {
+        if (vq.id && vq.quote && vq.verified) {
+          state.verifiedQuotes[vq.id] = vq.quote;
+        }
+      });
+    }
     if (run.model) {
       $('#ai-status').innerHTML = `<i class="ph-bold ph-lightning text-emerald-600"></i> AI: ${escapeHtml(run.model)}`;
     }
@@ -535,7 +968,10 @@ async function ask(raw, { display, turn = null, exclude = [], section = null, th
       state.history.push({ role: 'user', text: run.question }, { role: 'assistant', text: run.answer });
     }
     const first = run.citations[0] || run.where_ids?.[0];
-    if (first) openSource(first);
+    if (first) {
+      const qText = state.verifiedQuotes?.[first] || '';
+      openSource(first, qText);
+    }
     if (then === 'report_first_citation' && run.citations.length) {
       setTimeout(() => reportSource(run.run_id, run.citations[0]), 1500);
     }
@@ -773,7 +1209,7 @@ async function runTurn(turn, lecture, then) {
 document.addEventListener('click', (ev) => {
   const t = ev.target.closest('button, [data-tab]');
   if (!t) return;
-  if (t.dataset.cite) openSource(t.dataset.cite);
+  if (t.dataset.cite) openSource(t.dataset.cite, state.verifiedQuotes?.[t.dataset.cite] || '');
   else if (t.dataset.report) reportSource(t.dataset.run, t.dataset.report);
   else if (t.dataset.ask) {
     const origin = state.runs[t.dataset.run];
@@ -841,6 +1277,14 @@ $('#deck').addEventListener('change', (ev) => showSlide(ev.target.value, 1));
 $('#page-input').addEventListener('change', (ev) => { state.pdf.page = Number(ev.target.value) || 1; renderPage(); });
 $('#transcript-file').addEventListener('change', (ev) => showTranscript(ev.target.value));
 $('#transcript-filter').addEventListener('input', renderTranscript);
+$('#transcript-list')?.addEventListener('click', (ev) => {
+  const card = ev.target.closest('[id^="para-"]');
+  if (card && !ev.target.closest('button')) {
+    document.querySelectorAll('.transcript-active-card').forEach((c) => c.classList.remove('transcript-active-card'));
+    card.classList.add('transcript-active-card');
+    flash(card);
+  }
+});
 
 let resizeTimer;
 window.addEventListener('resize', () => {
@@ -875,6 +1319,7 @@ ${health.slide_pages} trang slide · ${health.transcript_paragraphs} đoạn tra
   for (const l of data.lectures) state.lectures[l.id] = l;
   $('#lecture').innerHTML = data.lectures.map((l) => `<option value="${l.id}">${escapeHtml(l.title)}</option>`).join('');
   await setLecture('day1', { announce: false });
+  setupPinEvents();
   welcome();
   loadScenarios().catch((e) => toast(`Không tải được kịch bản: ${e.message}`));
   loadGoldenSet().catch((e) => console.warn('Lỗi tải golden set:', e));

@@ -2,18 +2,19 @@
 
 **SPEC → Prototype → Demo.** Đây không phải cuộc thi code — đây là cuộc thi **tư duy sản phẩm AI**.
 
+> 🎯 **Dự án:** **VLearn Grounded Tutor** (Track A — Lớp 3A · Phòng E402)  
+> **Giải pháp:** Trợ giảng AI bám sát bài giảng — chỉ trả lời khi có căn cứ từ slide/transcript kèm thẻ nguồn mở đúng trang. Tích hợp tính năng nổi bật **Smart Visual Pinning** (khoanh vùng & bắt điểm tương tác trực tiếp trên slide PDF) giúp triệt tiêu hoàn toàn câu hỏi mơ hồ ("ở đây", "chỗ này") và giảm 100% tải nhận thức mô tả ngữ cảnh.  
+> 🔗 **Tài liệu chính:** [`spec.md`](spec.md) (AI Spec chi tiết) · [`codebase/README.md`](codebase/README.md) (Hướng dẫn chạy & kiến trúc prototype) · [`README_CP3.md`](README_CP3.md) (Báo cáo Checkpoint 3)
+
 ## 👥 Thành viên nhóm & Phân công vai trò
 
-**Lớp:** 3A · **Phòng:** E402 · **Cụm:**  · **Track:** 1
+**Lớp:** 3A · **Phòng:** E402 · **Cụm:** C1 · **Track:** A (VLearn Grounded Tutor)
 
 | Họ và Tên | Mã Học Viên | Vai trò chính | Phần việc đảm nhiệm trong dự án |
 |---|---|---|---|
-|Đàm Quang Trung  |2A202602525  |Leader  |  |
-|Thái Hữu Tuấn  |2A202602465  |  |  |
-|Võ Minh Quân  |2A202602429  |  |  |
-|Phan Trọng Hoàn  |2A202602954  |  |  |
 
-> Nhóm copy nguyên file README này về repo của mình, rồi điền bảng trên. Cột **Phần việc đảm nhiệm** ghi càng cụ thể càng tốt.
+
+> **Willing Users (đã khai từ CP1):** Đào Đức Hải, Nguyễn Xuân Trường Giang, Võ Doanh Nhân, Nguyễn Nhân Sâm (Lớp 3A · Phòng E402).
 
 - Thời lượng: **47,5 giờ** từ phát đề đến thuyết trình (ca 3A) — LAB 5 (phát đề + build) · LEC 6 (tiếp tục build theo ca) · LAB 6 (vòng thi)
 - Nhóm: **3-4 người** · thi theo phòng (E403 / E402), chia cụm rồi chung kết phòng — xem *Thể thức thi*

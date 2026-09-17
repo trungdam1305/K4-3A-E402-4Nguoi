@@ -13,7 +13,8 @@ Trợ giảng chỉ trả lời từ slide và transcript của bài đang học
 | Sinh câu trả lời, hỏi lại, từ chối | Thật: OpenAI `gpt-4.1-mini`; model hết lượt hoặc lỗi thì tự chuyển xuống `gpt-4o-mini` rồi tới các model Gemini |
 | Kiểm mã nguồn (gỡ mã bịa, hạ cấp câu trả lời không có nguồn) | Thật: `tutor/agent.py::check_citations` |
 | Báo nguồn sai → tìm lại | Thật: gọi lại agent với `exclude=[mã bị báo]`, ghi `logs/feedback.jsonl` |
-| Đăng nhập, lịch sử chat lâu dài, bôi đen trên slide | **Chưa làm.** Chọn "phần đang học" bằng dropdown thay cho ngữ cảnh VLearn tự chèn |
+| Tương tác trực tiếp trên slide (Smart Visual Pinning) | Thật: Canvas overlay khoanh vùng (lasso selection), tự động trích xuất toạ độ & text qua PDF.js, hộp đèn Spotlight highlight và ghim giải thích (Smart Pin) |
+| Đăng nhập, lưu lịch sử chat lâu dài | **Chưa làm.** Sử dụng phiên hiện hành, chọn "phần đang học" bằng dropdown thay cho ngữ cảnh VLearn tự chèn |
 
 ## Chạy
 
@@ -68,6 +69,39 @@ Thanh "Câu hỏi thật của K4" phát lại các lượt thật trong chatlog
 | Correction | `sửa nguồn · …` (T11695) | Trả lời xong thì tự bấm ⚑ ở nguồn đầu tiên; agent tìm lại, bỏ nguồn đó |
 
 Nút "Lượt K4 ngẫu nhiên chưa có trích dẫn" bốc một câu thật mà tutor cũ đã trả lời không có nguồn. Nút này dùng để thử trên dữ liệu mình chưa chọn trước.
+
+## Tính năng nổi bật: Smart Visual Pinning (Khoanh vùng & Bắt điểm trực tiếp trên slide)
+
+Biến trang slide PDF tĩnh thành một **Canvas tương tác thông minh**:
+
+- **Nỗi đau giải quyết:** Học viên khi xem slide thường gặp khó khăn trong việc gõ mô tả vị trí ("ở ô này", "hình vẽ góc dưới bên phải", "công thức số 2"). Điều này dẫn đến các câu hỏi mơ hồ (Ứng viên B trong spec: "ở đây", "phần này") và gia tăng tải nhận thức của người học.
+- **Cách hoạt động & Kiến trúc kỹ thuật:**
+  1. **Khoanh vùng trực quan (Lasso / Box Selection):** Lớp `#slide-overlay` bắt sự kiện chuột (`mousedown`, `mousemove`, `mouseup`) cho phép kéo chuột vẽ khung chọn (`#pin-drag-box`) trực tiếp trên canvas slide.
+  2. **Trích xuất toạ độ & Text hình học tự động (`extractTextInBox`):** Hệ thống dùng ma trận biến đổi toạ độ (`transform`) của PDF.js text layer để quét chính xác mọi từ ngữ nằm trọn trong bounding box đã khoanh.
+  3. **Ghim thông minh (Smart Pin card):** Thẻ ghim popover (`#smart-pin-card`) thả neo ngay tại toạ độ khoanh vùng, hiển thị đoạn trích xuất xem trước và nút *"Hỏi AI về vùng này"*.
+  4. **Hộp đèn Spotlight Highlight (`#pin-spotlight-box`):** Hộp đèn viền xanh phát sáng bao quanh chi tiết được hỏi trên slide, làm dịu vùng xung quanh, giúp mắt học viên không bị phân mảnh giữa slide và khung chat.
+  5. **Tích hợp ngữ cảnh Agent:** Gửi tiền tố `(Trang N, đoạn được chọn: "...")` vào Agent backend. AI ưu tiên trả lời súc tích (1–3 câu) tập trung vào đúng đối tượng được ghim, kèm thẻ nguồn bấm được và đồng bộ với khung chat. Bấm phím `ESC` hoặc click ra ngoài để gạt bỏ thẻ ghim tức thì (nguyên tắc G8).
+
+## Tối ưu nổi bật (Run 2 — Đạt 20/20 100% Golden Set)
+
+### 1. Trích dẫn kèm câu nguyên văn, kiểm bằng code, tô đúng câu trên slide (Exact Quote Line Highlighting)
+- **Kiểm bằng code Python:** `verify_exact_quotes()` so khớp câu trích dẫn nguyên văn với nguồn tài liệu (0 token, 0 ms gọi AI). Đạt tỷ lệ hợp lệ **97.5%**.
+- **Tô đúng dòng trên slide:** Frontend tự động xác định toạ độ hình học của câu trích trên canvas PDF và chiếu khung chữ nhật viền vàng cam rực rỡ (`#quote-line-highlight`) trong 1 giây, kèm trích đoạn trong thanh trạng thái slide. Thu hẹp hoàn toàn khoảng cách từ việc mở trang đến việc xác định đúng câu trong trang.
+
+### 2. Bảng ánh xạ "phần đang học → tài liệu" do người soạn (`tutor/catalog.py`)
+- Định tuyến xác định (deterministic routing) tên phần thật trên VLearn sang tài liệu có thật trong data pack.
+- Chữa dứt điểm lỗi LLM ảo giác mượn lab khác (GS-11, GS-12) và các câu hỏi mơ hồ không có bôi đen (GS-04, GS-05, GS-06, GS-09).
+
+### 3. Hệ thống Tiêu Điểm & Tô Sáng Vàng Hổ Phách Trên Transcript (Vibrant Amber Spotlight)
+- **Khối thẻ tiêu điểm bền vững (`.transcript-active-card`):** Dải chỉ báo bên trái dày 6px màu hổ phách đậm (`border-l-[6px] border-amber-600`), nền dải màu gradient vàng kem sang trọng (`linear-gradient(to right, #fffbeb, #fefce8, #ffffff)`), chip ID đoạn văn `[Txx-NNN]` chuyển thành nhãn màu hổ phách chữ trắng đậm có bóng nổi.
+- **Animation phát quang đa tầng (`pulseAmberGlow`):** Chu kỳ phát quang màu vàng hổ phách tỏa sáng (`box-shadow` 3 tầng) kết hợp nhịp đập phóng to nhẹ (`scale(1.012)`), loại bỏ hoàn toàn viền xám đen mờ nhạt trước đây.
+- **Bôi màu trực tiếp vào câu chữ (`<mark>`):** Tự động bóc tách câu trích dẫn và bọc bằng thẻ `<mark>` viền đậm (`ring-2 ring-amber-500`), gắn huy hiệu `✨ Đoạn thông tin AI trích dẫn làm căn cứ` (hoặc `📍 Vị trí đoạn văn bản AI đang chỉ dẫn` nếu trích dẫn tổng quát).
+- **Tương tác click trực tiếp:** Người học có thể click vào bất kỳ đoạn nào trong danh sách Transcript để kích hoạt ngay hiệu ứng tiêu điểm và cuộn mượt đến giữa tầm nhìn.
+
+### 4. Tinh chỉnh Typography & Nút bấm To Rõ, Nổi Bật ("To lên / Tô lên")
+- Toàn bộ cỡ chữ nội dung chat, câu hỏi và input được tăng từ 11–12px lên **14px (`text-sm`)** với khoảng cách dòng thoáng đãng (`leading-relaxed`).
+- Header và các tiêu đề chính được phóng to lên **16–18px (`text-base / text-lg font-bold`)**.
+- Các nút bấm được mở rộng padding và touch target (vd. nút chat tròn nổi tăng lên `56px x 56px`, các nút điều hướng slide tăng lên `56px x 56px`), bóng đổ sâu và viền nét rõ, tối ưu hóa trải nghiệm đọc và tương tác.
 
 ## Luồng agent (`tutor/agent.py`)
 

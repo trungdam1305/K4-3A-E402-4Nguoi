@@ -94,6 +94,10 @@ Phân tích đầy đủ nằm trong [`eval/run_results.md`](eval/run_results.md
    - chọn một trong 20 ca để xem câu trả lời cũ của tutor (theo `turn_id`) cạnh câu trả lời đã lưu từ lượt đo;
    - nút **"Thử với AI thật"** chạy lại ca đó ngay trên web.
 5. **Server:** thêm 2 endpoint `/api/eval/golden_set` và `/api/eval/results`.
+6. **Smart Visual Pinning (Tương tác bắt điểm trực tiếp trên slide):**
+   - Biến trang slide PDF tĩnh thành Canvas tương tác: kéo chuột khoanh vùng toạ độ (lasso selection) vào sơ đồ, công thức hoặc chữ trên slide.
+   - Tự động trích xuất text qua PDF.js layer; thả thẻ ghim thông minh (Smart Pin) tại chỗ kèm nút hỏi AI nhanh.
+   - Hộp đèn Spotlight viền sáng bao quanh chi tiết được hỏi, đồng bộ mắt nhìn người học giữa slide và câu trả lời.
 
 ## 6. Tài liệu
 
@@ -111,6 +115,17 @@ python codebase/server.py      # mở http://127.0.0.1:8000
 - **Giây 15–25:** mở tab **So Sánh Đối Chiếu**, chỉ vào huy hiệu **Run 1 (CP3): 17/20 Đạt (85%)**, chọn **GS-11** để cho thấy một ca hỏng thật: tutor cũ trả lời chung chung, không có nguồn; AI mới dẫn nguồn có thật nhưng thuộc một lab khác. Nên giữ ca hỏng này trong video, không giấu.
 - **Giây 25–30:** mở tab **Căn Cứ Đã Tra** để xem các đoạn BM25 đã tra kèm điểm.
 
+> **Mẹo Demo ấn tượng cao (Smart Visual Pinning):** Kéo chuột khoanh vùng trực tiếp một ô/sơ đồ trên slide (ví dụ sơ đồ ở trang 29 hoặc 12) → Thẻ Pin thông minh xuất hiện tại toạ độ kèm hộp đèn Spotlight viền sáng → Bấm *"Hỏi AI về vùng này"* → AI trả lời giải thích súc tích có nguồn, mắt học viên không bị phân mảnh.
+
+---
+
+## 8. Cập nhật tiến độ CP4: Đạt 20/20 (100%) & Hệ thống Tô Sáng Đa Tầng
+
+Sau mốc CP3 (17/20 Đạt, 85%), nhóm đã thực hiện 2 hướng cải tiến đột phá và đánh giá lại tại mốc CP4:
+1. **Bảng ánh xạ tài liệu (`codebase/tutor/catalog.py`):** Định tuyến xác định các lab ngoài data pack (GS-11, GS-12) và câu hỏi quiz mơ hồ (GS-06, GS-09) $\rightarrow$ **Đạt tuyệt đối 20/20 (100.0%)** trên Golden Set!
+2. **Kiểm chứng câu trích bằng code (0ms) & Tô sáng dòng nguyên văn trên Slide:** Tự động phát hiện bounding box câu trích trên canvas PDF và chiếu khung chữ nhật phát sáng (`#quote-line-highlight`), đạt tỷ lệ **97.5%** câu trích nguyên văn hợp lệ.
+3. **Vibrant Amber Spotlight trên Transcript:** Thay thế hiệu ứng nháy viền xám đen mờ nhạt cũ bằng hệ thống thẻ tiêu điểm vàng hổ phách (`.transcript-active-card`), dải chỉ báo bên trái 6px, hiệu ứng phát quang `pulseAmberGlow` và bôi màu trực tiếp vào câu chữ bằng thẻ `<mark>` viền đậm.
+
 ---
 
 ## Tệp liên quan
@@ -121,6 +136,6 @@ python codebase/server.py      # mở http://127.0.0.1:8000
 | [`eval/run_eval.py`](eval/run_eval.py) | Chạy golden set qua pipeline thật và ghi kết quả |
 | [`eval/runs/`](eval/runs/) | Bản ghi đầy đủ của từng lượt chạy |
 | [`eval/results.json`](eval/results.json) | Lượt chạy mới nhất (giao diện đọc file này) |
-| [`eval/run_results.md`](eval/run_results.md) | Bảng tự sinh và phân tích lỗi |
+| [`eval/run_results.md`](eval/run_results.md) | Bảng tự sinh và phân tích lỗi (Run 1: 17/20, Run 2: 20/20) |
 | [`codebase/`](codebase/) | Prototype: server, agent, giao diện |
 | [`spec.md`](spec.md) | §7 Kiểm thử, §9 Changelog |

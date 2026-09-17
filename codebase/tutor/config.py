@@ -8,7 +8,9 @@ CACHE_DIR = CODEBASE_DIR / ".cache"
 LOG_DIR = CODEBASE_DIR / "logs"
 
 # Thứ tự nhà cung cấp LLM (LLM_PROVIDERS); nhà nào không có key thì bỏ qua.
-DEFAULT_PROVIDERS = ["openai", "gemini"]
+DEFAULT_PROVIDERS = ["openai", "deepseek", "gemini"]  # GPT trước; lỗi/hết hạn mức thì sang DeepSeek
+DEFAULT_DEEPSEEK_MODEL = "deepseek-v4.1"
+DEFAULT_DEEPSEEK_FALLBACK_MODELS = ["deepseek-v4-flash"]
 DEFAULT_OPENAI_MODEL = "gpt-4.1-mini"
 DEFAULT_OPENAI_FALLBACK_MODELS = ["gpt-4o-mini"]
 DEFAULT_MODEL = "gemini-3.6-flash"

@@ -1,18 +1,23 @@
-"""Gọi LLM qua REST (không cần SDK): OpenAI và Gemini, thử lần lượt theo chuỗi model.
+"""Gọi LLM qua REST (không cần SDK): OpenAI, DeepSeek (hoặc cổng tương thích OpenAI) và Gemini,
+thử lần lượt theo chuỗi model.
 
 Key chỉ đọc từ biến môi trường / codebase/.env, không log key. Model nào báo 429 (hết hạn mức)
-bị tạm bỏ qua 1 giờ và client chuyển sang model kế tiếp trong chuỗi.
+bị tạm bỏ qua 1 giờ và client chuyển sang model kế tiếp trong chuỗi. JSON trả về luôn được kiểm
+theo schema bằng code; sai schema thì chuyển model kế tiếp.
 """
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
 
-from .config import (DEFAULT_FALLBACK_MODELS, DEFAULT_MODEL, DEFAULT_OPENAI_FALLBACK_MODELS,
-                     DEFAULT_OPENAI_MODEL, DEFAULT_PROVIDERS)
+from .config import (DEFAULT_DEEPSEEK_FALLBACK_MODELS, DEFAULT_DEEPSEEK_MODEL, DEFAULT_FALLBACK_MODELS,
+                     DEFAULT_MODEL, DEFAULT_OPENAI_FALLBACK_MODELS, DEFAULT_OPENAI_MODEL, DEFAULT_PROVIDERS)
 
 EXHAUSTED_COOLDOWN_S = 3600
+# Một số cổng API (sau Cloudflare) chặn User-Agent mặc định của urllib (lỗi 1010).
+USER_AGENT = "VLearnTutor/0.2"
 
 
 class LLMError(RuntimeError):
@@ -27,7 +32,7 @@ class HTTPFailure(Exception):
 
 def _post_json(url: str, body: dict, headers: dict, timeout: float) -> dict:
     req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"),
-                                 headers={"Content-Type": "application/json", **headers})
+                                 headers={"Content-Type": "application/json", "User-Agent": USER_AGENT, **headers})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
@@ -40,6 +45,33 @@ def _error_message(detail: str) -> str:
         return json.loads(detail)["error"]["message"].splitlines()[0][:160]
     except (ValueError, KeyError, TypeError, AttributeError, IndexError):
         return detail[:160]
+
+
+def schema_problems(value, schema: dict, path: str = "$") -> list:
+    """Kiểm JSON theo schema kiểu Gemini (type viết hoa, enum, required). Trả danh sách lỗi."""
+    t = schema["type"].upper()
+    kinds = {"OBJECT": dict, "ARRAY": list, "STRING": str, "BOOLEAN": bool}
+    if t in ("NUMBER", "INTEGER"):
+        ok = isinstance(value, (int, float)) and not isinstance(value, bool)
+    else:
+        ok = isinstance(value, kinds.get(t, object))
+    if not ok:
+        return [f"{path} phải là {t.lower()}"]
+    problems = []
+    if "enum" in schema and value not in schema["enum"]:
+        problems.append(f"{path}={str(value)[:30]!r} không thuộc {schema['enum']}")
+    if t == "OBJECT":
+        # Khoá bắt buộc chỉ kiểm ở cấp ngoài cùng; mục con thiếu trường (vd. một câu trích) agent tự bỏ qua.
+        for key in schema.get("required", []) if path == "$" else []:
+            if key not in value:
+                problems.append(f"thiếu {path}.{key}")
+        for key, sub in schema.get("properties", {}).items():
+            if key in value and value[key] is not None:
+                problems += schema_problems(value[key], sub, f"{path}.{key}")
+    elif t == "ARRAY":
+        for i, item in enumerate(value):
+            problems += schema_problems(item, schema["items"], f"{path}[{i}]")
+    return problems
 
 
 def _models_from_env(model_var, fallback_var, default_model, default_fallbacks):
@@ -129,7 +161,7 @@ class OpenAIProvider:
                                       DEFAULT_OPENAI_MODEL, DEFAULT_OPENAI_FALLBACK_MODELS)
             return cls(key, models, os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"))
 
-    def call(self, model: str, system: str, prompt: str, schema: dict) -> tuple[str, dict]:
+    def _body(self, model: str, system: str, prompt: str, schema: dict) -> dict:
         body = {
             "model": model,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
@@ -141,6 +173,10 @@ class OpenAIProvider:
             body["reasoning_effort"] = "low"  # model suy luận không nhận temperature
         else:
             body["temperature"] = 0.2
+        return body
+
+    def call(self, model: str, system: str, prompt: str, schema: dict) -> tuple[str, dict]:
+        body = self._body(model, system, prompt, schema)
         data = _post_json(self.url, body, {"Authorization": f"Bearer {self.api_key}"}, self.timeout)
         choice = (data.get("choices") or [{}])[0]
         message = choice.get("message", {})
@@ -157,7 +193,46 @@ class OpenAIProvider:
         }
 
 
-PROVIDERS = {"openai": OpenAIProvider, "gemini": GeminiProvider}
+class DeepSeekProvider(OpenAIProvider):
+    """DeepSeek hoặc cổng tương thích OpenAI không ép được JSON Schema: dùng json_object,
+    đưa schema vào system prompt, và để LLMClient kiểm lại bằng code."""
+    name = "deepseek"
+
+    @classmethod
+    def from_env(cls):
+        key = os.environ.get("DEEPSEEK_API_KEY")
+        if key:
+            models = _models_from_env("DEEPSEEK_MODEL", "DEEPSEEK_FALLBACK_MODELS",
+                                      DEFAULT_DEEPSEEK_MODEL, DEFAULT_DEEPSEEK_FALLBACK_MODELS)
+            return cls(key, models, os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"))
+
+    def _body(self, model: str, system: str, prompt: str, schema: dict) -> dict:
+        spec = json.dumps(_openai_schema(schema), ensure_ascii=False)
+        system = (f"{system}\n\nĐỊNH DẠNG TRẢ LỜI: chỉ trả về MỘT JSON object hợp lệ (json), không kèm chữ nào khác, "
+                  f"đúng JSON Schema sau — mọi khoá đều phải có, giá trị enum phải chép đúng:\n{spec}")
+        return {
+            "model": model,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+            "response_format": {"type": "json_object"},
+            "max_tokens": 2000,
+            "temperature": 0.2,
+        }
+
+    def call(self, model: str, system: str, prompt: str, schema: dict) -> tuple[str, dict]:
+        text, meta = super().call(model, system, prompt, schema)
+        # Một số cổng vẫn bọc JSON trong ```json … ``` hoặc viết thêm sau object dù đã yêu cầu json_object:
+        # chỉ lấy object JSON đầu tiên.
+        fenced = re.fullmatch(r"\s*```(?:json)?\s*(.*?)\s*```\s*", text, re.S)
+        text = (fenced.group(1) if fenced else text).strip()
+        try:
+            obj, _ = json.JSONDecoder().raw_decode(text)
+            text = json.dumps(obj, ensure_ascii=False)
+        except ValueError:
+            pass  # để LLMClient báo "JSON hỏng" và chuyển model
+        return text, meta
+
+
+PROVIDERS = {"deepseek": DeepSeekProvider, "openai": OpenAIProvider, "gemini": GeminiProvider}
 
 
 # ---------------------------------------------------------------- chuỗi model
@@ -222,6 +297,10 @@ class LLMClient:
                 continue
             except json.JSONDecodeError:
                 errors.append(f"{model} trả JSON hỏng: {text[:120]}")
+                continue
+            problems = schema_problems(result, schema)
+            if problems:
+                errors.append(f"{model} trả JSON sai schema: {'; '.join(problems[:3])}")
                 continue
             meta.update(provider=provider.name, fallback_errors=errors,
                         llm_ms=round((time.perf_counter() - started) * 1000))

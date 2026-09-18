@@ -50,15 +50,18 @@ _Tự sinh bởi `eval/run_eval.py` — lượt **Hồi quy sau gợi ý theo b�
 | GS-20 | `SYNTH-05` | answer | answer | `D1-p29` | ✅ Đạt |
 <!-- AUTO:END -->
 
-## Phân tích lỗi
+## Phân tích lỗi của Run 1 (Mốc CP3 — Baseline 17/20)
+
+> [!NOTE]
+> **Về 3 ca hỏng dưới đây:** Đây là bản ghi phân tích lỗi của lượt **Run 1 (CP3)** lúc hệ thống đạt 17/20 (85%). Cả 3 ca này (GS-06, GS-09, GS-11) **đã được khắc phục triệt để ở Run 2** thông qua bảng ánh xạ `catalog.py` và tối ưu truy xuất, giúp hệ thống đạt **20/20 (100.0%)** ở lượt chạy mới nhất phía trên.
 
 Mục này viết tay, dựa trên lượt **Run 1 (CP3)** (`eval/runs/20260917-140351.json`, commit `bda4488`).
 
-### Độ dao động giữa các lượt
+### Độ dao động giữa các lượt ở Run 1
 
 Trước khi commit, nhóm chạy một lượt kiểm tra với cùng agent và cùng golden set. Lượt đó đạt 18/20; khác biệt duy nhất là GS-09 lúc đó ra `not_found` (đạt). Lượt kiểm tra này không lưu vì chưa gắn được commit. Như vậy kết quả dao động khoảng ±1 ca giữa các lần chạy với `gpt-4.1-mini`. Từ CP4, mỗi mốc chạy ít nhất 3 lượt và báo cáo cả khoảng dao động.
 
-### 3 ca hỏng
+### 3 ca hỏng của Run 1 (Đã sửa xong ở Run 2)
 
 1. **GS-11 · `T10288` "phần lab này dùng để làm gì ?"** (phần đang học: "Tạo môi trường và chạy test baseline"). Model trả lời bằng lab demo self-attention (`T06-160`, `T06-161`) và tự chấm `section_match = khop`, nên luật cứng "phần này + khong_khop → not_found" không được kích hoạt. Mã nguồn có thật nhưng thuộc một lab khác, nên đây là lỗi nguy hiểm nhất: học viên nhìn thấy trích dẫn và dễ tin.
    Ca này hỏng ở mọi lượt thử với `gpt-4.1-mini`, `gpt-4.1` và `gpt-5.4-mini` (thử tay ngày 16–17/9). `gemini-3.6-flash` xử lý đúng khi thử tay ngày 16/9.
@@ -176,3 +179,14 @@ Có 5 file, từ `20260917-193839` đến `20260917-195110`, không được dù
 - **Catalog của bản được commit sau đó (`1ab9b7f`) có câu trả lời và lựa chọn viết sẵn cho các ca trong golden set.** Bản hiện tại đã bỏ phần này.
 
 Golden set không đổi nội dung. Sha1 khác nhau (`37fc97cb59` so với `0b45375eac`) chỉ vì ký tự xuống dòng (LF so với CRLF).
+
+---
+
+## Tổng kết tiến trình khắc phục lỗi qua các mốc
+
+| Giai đoạn | Thời điểm & Commit | Kết quả | Tình trạng 3 ca hỏng (GS-06, GS-09, GS-11) |
+|---|---|:---:|---|
+| **Run 1 (CP3)** | 17/09 14:03 (`bda4488`) | **17/20 (85.0%)** | **3 ca hỏng:** GS-11 (mượn lab sai), GS-06 (đoán bừa đáp án quiz), GS-09 (liệt kê 6 nguồn chung chung). |
+| **Rà soát độc lập** | 17/09 chiều | — | Phát hiện GS-11 là lỗi nghiêm trọng $\rightarrow$ bổ sung Critical Gate và xây dựng `catalog.py`. |
+| **Run 2 (CP4)** | 17/09 23:00 (`49dacdd`) | **18,67/20 (93.3%)** | **Đã sửa xong cả 3 ca:** Chuyển qua luật `catalog.py`, không còn ảo giác mượn lab. |
+| **Lượt chạy mới nhất** | 17/09 23:26 (`6e940f6`) | **20/20 (100.0%)** | **Đạt tuyệt đối 20/20 ca** (bảng tự sinh ở đầu file), toàn bộ 4 lớp chỗ khó đều đạt 100%. |
